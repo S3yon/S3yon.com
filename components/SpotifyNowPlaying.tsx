@@ -55,10 +55,10 @@ export default function SpotifyNowPlaying() {
   useEffect(() => {
     const interval = setInterval(() => {
       const time = Date.now();
-      
+
       if (animationPhase === 'starting') {
         // Startup animation - bars rise in a wave
-        setTargetHeights(prev => 
+        setTargetHeights(prev =>
           prev.map((_, i) => {
             const wavePosition = (time / 50) % 80;
             const distance = Math.abs(i - wavePosition);
@@ -71,7 +71,7 @@ export default function SpotifyNowPlaying() {
         );
       } else if (animationPhase === 'playing') {
         // Normal playing animation
-        setTargetHeights(prev => 
+        setTargetHeights(prev =>
           prev.map((_, i) => {
             const wave1 = Math.sin(time / 300 + i * 0.1) * 0.3;
             const wave2 = Math.sin(time / 200 + i * 0.2) * 0.2;
@@ -84,7 +84,7 @@ export default function SpotifyNowPlaying() {
         );
       } else if (animationPhase === 'stopping') {
         // Stopping animation - cascade drop effect
-        setTargetHeights(prev => 
+        setTargetHeights(prev =>
           prev.map((_, i) => {
             const cascadeDelay = i * 15; // Delay for cascade effect
             const timeSinceStopping = time % 1000;
@@ -103,14 +103,14 @@ export default function SpotifyNowPlaying() {
           return (i % 8 === 0 || i % 8 === 4) ? Math.floor(idleWave) : 1;
         }));
       }
-      
+
       // Smooth transition to target heights
-      setBarHeights(prev => 
+      setBarHeights(prev =>
         prev.map((height, i) => {
           const target = targetHeights[i];
           const diff = target - height;
           // Different easing based on animation phase
-          const easing = animationPhase === 'stopping' ? 0.15 : 
+          const easing = animationPhase === 'stopping' ? 0.15 :
                          animationPhase === 'starting' ? 0.25 : 0.3;
           return height + diff * easing;
         })

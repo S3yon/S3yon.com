@@ -153,7 +153,7 @@
     box-shadow: -4px 0 8px rgba(0, 0, 0, 0.3);
   }
 
-  /* Road line animation */
+  /* Road line animation - DISABLED */
   @keyframes road-lines {
     0% {
       background-position: 0 0;
@@ -177,10 +177,10 @@
       transparent 40px
     );
     background-size: 100% 40px;
-    animation: road-lines 2s linear infinite;
+    /* animation: road-lines 2s linear infinite; */
   }
 
-  /* Building parallax animation - moves up slowly */
+  /* Building parallax animation - DISABLED */
   @keyframes building-move {
     0% {
       transform: translateY(100vh);
@@ -191,12 +191,12 @@
   }
 
   .building-parallax {
-    transform: translateY(100vh);
-    animation: building-move 60s linear infinite;
-    animation-fill-mode: both;
+    /* transform: translateY(100vh); */
+    /* animation: building-move 60s linear infinite; */
+    /* animation-fill-mode: both; */
   }
 
-  /* Slower building parallax for background */
+  /* Slower building parallax for background - DISABLED */
   @keyframes building-move-slow {
     0% {
       transform: translateY(100vh);
@@ -207,9 +207,9 @@
   }
 
   .building-parallax-slow {
-    transform: translateY(100vh);
-    animation: building-move-slow 90s linear infinite;
-    animation-fill-mode: both;
+    /* transform: translateY(100vh); */
+    /* animation: building-move-slow 90s linear infinite; */
+    /* animation-fill-mode: both; */
   }
 
   /* Cycling character animation - scrolls from top to bottom */

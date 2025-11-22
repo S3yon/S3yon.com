@@ -23,66 +23,66 @@ export default function Home() {
       <div className="town-scene fixed right-0 top-0 h-full w-[500px] z-10 hidden lg:block pointer-events-none">
         {/* RIGHT SIDE of road - Buildings closer to edge */}
         <div className="building-parallax absolute right-5 top-[-5%]" style={{ animationDelay: '0s' }}>
-          <Image src="/medium-widget-4@3x.png" alt="building" width={130} height={130} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-4@3x.png" alt="building" width={130} height={130} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-0 top-[8%]" style={{ animationDelay: '0.5s' }}>
-          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-10 top-[20%]" style={{ animationDelay: '1s' }}>
-          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-5 top-[32%]" style={{ animationDelay: '1.5s' }}>
-          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-0 top-[44%]" style={{ animationDelay: '2s' }}>
-          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-8 top-[56%]" style={{ animationDelay: '2.5s' }}>
-          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-3 top-[68%]" style={{ animationDelay: '3s' }}>
-          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-0 top-[80%]" style={{ animationDelay: '3.5s' }}>
-          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-10 top-[92%]" style={{ animationDelay: '4s' }}>
-          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-5 top-[104%]" style={{ animationDelay: '4.5s' }}>
-          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-85" loading="lazy" />
         </div>
 
         {/* LEFT SIDE of road - Buildings on the other side */}
         <div className="building-parallax absolute right-[280px] top-[0%]" style={{ animationDelay: '0.2s' }}>
-          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[290px] top-[12%]" style={{ animationDelay: '0.7s' }}>
-          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[275px] top-[24%]" style={{ animationDelay: '1.2s' }}>
-          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[285px] top-[36%]" style={{ animationDelay: '1.7s' }}>
-          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[290px] top-[48%]" style={{ animationDelay: '2.2s' }}>
-          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[278px] top-[60%]" style={{ animationDelay: '2.7s' }}>
-          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[288px] top-[72%]" style={{ animationDelay: '3.2s' }}>
-          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[292px] top-[84%]" style={{ animationDelay: '3.7s' }}>
-          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-6@3x.png" alt="building" width={150} height={150} className="pixelated opacity-85" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[280px] top-[96%]" style={{ animationDelay: '4.2s' }}>
-          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-80" priority />
+          <Image src="/medium-widget-4@3x.png" alt="building" width={140} height={140} className="pixelated opacity-80" loading="lazy" />
         </div>
         <div className="building-parallax absolute right-[290px] top-[108%]" style={{ animationDelay: '4.7s' }}>
-          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-85" priority />
+          <Image src="/medium-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-85" loading="lazy" />
         </div>
 
         {/* Truck - positioned on right side */}
@@ -115,23 +115,26 @@ export default function Home() {
 
       {/* Static Left Side Images */}
       <div className="fixed -left-20 lg:-left-16 xl:-left-20 top-0 h-full w-[500px] lg:w-[550px] xl:w-[600px] z-10 hidden lg:block pointer-events-none">
-        {/* Images */}
-        <div className="absolute left-0 top-[-8%] lg:top-[-5%] xl:top-0">
-          <Image src="/bigcamera.png" alt="photography" width={400} height={400} className="pixelated opacity-80 w-[320px] h-[320px] lg:w-[350px] lg:h-[350px] xl:w-[400px] xl:h-[400px]" />
+        {/* Big Camera */}
+        <div className="absolute left-0 top-[-15%] lg:top-[-12%] xl:top-[-8%]">
+          <Image src="/bigcamera.png" alt="photography" width={400} height={400} className="pixelated opacity-80 object-contain" style={{ width: '500px', height: '500px' }} />
         </div>
-        <div className="absolute left-16 lg:left-18 xl:left-20 top-[20%] lg:top-[22%] xl:top-[25%]">
+        {/* Church - More spacing from camera */}
+        <div className="absolute left-16 lg:left-18 xl:left-20 top-[28%] lg:top-[30%] xl:top-[32%]">
           <div style={{ transform: 'rotate(-12deg)' }}>
-            <Image src="/church.png" alt="church" width={350} height={350} className="pixelated opacity-85 w-[280px] h-[280px] lg:w-[300px] lg:h-[300px] xl:w-[350px] xl:h-[350px]" />
+            <Image src="/church.png" alt="church" width={350} height={350} className="pixelated opacity-85 object-contain" style={{ width: '300px', height: '300px' }} />
           </div>
         </div>
-        <div className="absolute left-32 lg:left-36 xl:left-40 top-[42%] lg:top-[45%] xl:top-[48%]">
+        {/* Car - More spacing from church */}
+        <div className="absolute left-32 lg:left-36 xl:left-40 top-[52%] lg:top-[54%] xl:top-[56%]">
           <div style={{ transform: 'rotate(18deg)' }}>
-            <Image src="/car.png" alt="car" width={250} height={250} className="pixelated opacity-90 w-[200px] h-[200px] lg:w-[220px] lg:h-[220px] xl:w-[250px] xl:h-[250px]" />
+            <Image src="/car.png" alt="car" width={250} height={250} className="pixelated opacity-90 object-contain" style={{ width: '300px', height: '300px' }} />
           </div>
         </div>
-        <div className="absolute left-8 lg:left-9 xl:left-10 top-[62%] lg:top-[65%] xl:top-[68%]">
+        {/* Cross - More spacing from car */}
+        <div className="absolute left-8 lg:left-9 xl:left-10 top-[74%] lg:top-[76%] xl:top-[78%]">
           <div style={{ transform: 'rotate(-25deg)' }}>
-            <Image src="/cross.png" alt="cross" width={300} height={300} className="pixelated opacity-90 w-[240px] h-[240px] lg:w-[260px] lg:h-[260px] xl:w-[300px] xl:h-[300px]" />
+            <Image src="/cross.png" alt="cross" width={300} height={300} className="pixelated opacity-90 object-contain" style={{ width: '300px', height: '300px' }} />
           </div>
         </div>
       </div>
@@ -246,9 +249,9 @@ export default function Home() {
 
         </div>
       </div>
-      
-      {/* Extra scroll space for discovery */}
-      <div className="h-[300px]"></div>
+
+      {/* Minimal scroll space */}
+      <div className="h-[20px]"></div>
     </div>
   );
 }
