@@ -1,0 +1,364 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply bg-slate-50;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    overscroll-behavior: none;
+    overflow-x: hidden;
+  }
+
+  body {
+    position: relative;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .pixel-border {
+    border-style: solid;
+    border-color: #0f380f;
+    image-rendering: pixelated;
+  }
+
+  @keyframes scanlines-move {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 80px;
+    }
+  }
+
+  .retro-scanlines {
+    background-color: #e8e8e8;
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(10, 10, 10, 0.03) 2px,
+        rgba(10, 10, 10, 0.03) 4px
+      );
+    background-size: 100% 80px;
+    animation: scanlines-move 60s linear infinite;
+  }
+
+  @keyframes crt-flicker {
+    0% {
+      opacity: 0.98;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.98;
+    }
+  }
+
+  .crt-screen {
+    animation: crt-flicker 3s infinite;
+  }
+
+  /* Typing Animation */
+  @keyframes typing {
+    from {
+      width: 0;
+      opacity: 0;
+    }
+    to {
+      width: 100%;
+      opacity: 1;
+    }
+  }
+
+  .typing-text {
+    overflow: hidden;
+    white-space: nowrap;
+    width: 0;
+    opacity: 0;
+  }
+
+  .typing-text.typing {
+    animation: typing 1.5s steps(40, end) forwards;
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #2a2a2a;
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #5a5a5a;
+    border-radius: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9a9a9a;
+  }
+
+  /* Pixelated images */
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  /* Slow spin animation for record player */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
+  /* Retro road on the right side - Game Boy Pokemon Red black & white style */
+  .retro-road {
+    position: fixed;
+    right: 80px;
+    top: 0;
+    width: 180px;
+    height: 100vh;
+    z-index: 40;
+    background: linear-gradient(
+      to left,
+      #000000 0%,
+      #000000 12px,
+      #5a5a5a 12px,
+      #5a5a5a 18px,
+      #e8e8e8 18px,
+      #e8e8e8 calc(100% - 18px),
+      #5a5a5a calc(100% - 18px),
+      #5a5a5a calc(100% - 12px),
+      #000000 calc(100% - 12px),
+      #000000 100%
+    );
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Road line animation */
+  @keyframes road-lines {
+    0% {
+      background-position: 0 0;
+    }
+    100% {
+      background-position: 0 -40px;
+    }
+  }
+
+  .road-lines {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    height: 100%;
+    background: linear-gradient(
+      to bottom,
+      #2a2a2a 0%,
+      #2a2a2a 20px,
+      transparent 20px,
+      transparent 40px
+    );
+    background-size: 100% 40px;
+    animation: road-lines 2s linear infinite;
+  }
+
+  /* Building parallax animation - moves up slowly */
+  @keyframes building-move {
+    0% {
+      transform: translateY(100vh);
+    }
+    100% {
+      transform: translateY(-100vh);
+    }
+  }
+
+  .building-parallax {
+    transform: translateY(100vh);
+    animation: building-move 60s linear infinite;
+    animation-fill-mode: both;
+  }
+
+  /* Slower building parallax for background */
+  @keyframes building-move-slow {
+    0% {
+      transform: translateY(100vh);
+    }
+    100% {
+      transform: translateY(-200vh);
+    }
+  }
+
+  .building-parallax-slow {
+    transform: translateY(100vh);
+    animation: building-move-slow 90s linear infinite;
+    animation-fill-mode: both;
+  }
+
+  /* Cycling character animation - scrolls from top to bottom */
+  @keyframes cycle-down {
+    0% {
+      top: -100px;
+    }
+    100% {
+      top: calc(100vh + 100px);
+    }
+  }
+
+  .cycling-character {
+    position: fixed;
+    right: 98px;
+    z-index: 50;
+    animation: cycle-down 30s linear infinite;
+  }
+
+  .cycling-sprite {
+    mix-blend-mode: multiply;
+    background: transparent !important;
+  }
+
+  /* Visualizer Grid Background - LED Matrix Effect */
+  .visualizer-grid {
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        rgba(255, 255, 255, 0.02) 0px,
+        transparent 1px,
+        transparent 3px,
+        rgba(255, 255, 255, 0.02) 4px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.02) 0px,
+        transparent 1px,
+        transparent 2px,
+        rgba(255, 255, 255, 0.02) 3px
+      );
+    opacity: 0.5;
+  }
+
+  /* Audio visualizer pixels - Retro LED Style */
+  .visualizer-pixel {
+    background-color: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    transition: all 0.08s ease-out;
+    position: relative;
+  }
+
+  /* Idle state - subtle glow at bottom */
+  .visualizer-idle .sound-wave-bar .visualizer-pixel[data-row="0"] {
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+
+  .visualizer-idle .sound-wave-bar:nth-child(8n) .visualizer-pixel[data-row="1"],
+  .visualizer-idle .sound-wave-bar:nth-child(8n+4) .visualizer-pixel[data-row="1"] {
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+  }
+
+  /* Playing state - classic green LED style */
+  .visualizer-playing .sound-wave-bar .visualizer-pixel {
+    background-color: #0a0a0a;
+    border-color: #1a1a1a;
+  }
+
+  .visualizer-playing .sound-wave-bar .visualizer-pixel.is-active {
+    background: linear-gradient(135deg, #8b8b8b 0%, #b8b8b8 100%);
+    border-color: #9a9a9a;
+    box-shadow: 
+      inset 0 0 2px rgba(255, 255, 255, 0.3),
+      0 0 4px rgba(155, 155, 155, 0.2);
+  }
+
+  /* Peak indicator - brighter top pixel */
+  .visualizer-playing .sound-wave-bar .visualizer-pixel.is-peak {
+    background: linear-gradient(135deg, #a0a0a0 0%, #e0e0e0 100%);
+    border-color: #c0c0c0;
+    box-shadow: 
+      inset 0 0 3px rgba(255, 255, 255, 0.5),
+      0 0 6px rgba(192, 192, 192, 0.4);
+  }
+
+  /* Subtle pulsing animation for idle state */
+  @keyframes idle-pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  .visualizer-idle {
+    animation: idle-pulse 2s ease-in-out infinite;
+  }
+
+  /* Startup flash effect */
+  @keyframes startup-flash {
+    0% { 
+      filter: brightness(1);
+    }
+    50% { 
+      filter: brightness(1.3);
+    }
+    100% { 
+      filter: brightness(1);
+    }
+  }
+
+  /* Stopping fade effect */
+  @keyframes stopping-fade {
+    0% { 
+      filter: brightness(1);
+    }
+    100% { 
+      filter: brightness(0.7);
+    }
+  }
+
+  .visualizer-starting {
+    animation: startup-flash 0.8s ease-out;
+  }
+
+  .visualizer-playing {
+    filter: brightness(1);
+  }
+
+  .visualizer-stopping {
+    animation: stopping-fade 1s ease-out forwards;
+  }
+
+  /* Enhanced peak pixels during transitions */
+  .visualizer-playing .sound-wave-bar .visualizer-pixel.is-peak {
+    animation: peak-glow 0.3s ease-out;
+  }
+
+  @keyframes peak-glow {
+    0% {
+      box-shadow: 
+        inset 0 0 3px rgba(255, 255, 255, 0.5),
+        0 0 10px rgba(192, 192, 192, 0.6);
+    }
+    100% {
+      box-shadow: 
+        inset 0 0 3px rgba(255, 255, 255, 0.5),
+        0 0 6px rgba(192, 192, 192, 0.4);
+    }
+  }
+
+
+}
