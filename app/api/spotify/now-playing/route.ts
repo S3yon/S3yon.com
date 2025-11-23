@@ -3,10 +3,11 @@ import { getNowPlaying, getRecentlyPlayed } from '@/lib/spotify';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const response = await getNowPlaying();
+  try {
+    const response = await getNowPlaying();
 
-  // If nothing is currently playing, fetch the last played track
-  if (response.status === 204 || response.status > 400) {
+    // If nothing is currently playing, fetch the last played track
+    if (response.status === 204 || response.status > 400) {
     const recentResponse = await getRecentlyPlayed();
 
     if (recentResponse.status === 200) {
@@ -68,4 +69,14 @@ export async function GET() {
     songUrl,
     title,
   });
+  } catch (error) {
+    console.error('Spotify API error:', error);
+    return Response.json(
+      {
+        isPlaying: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch Spotify data'
+      },
+      { status: 500 }
+    );
+  }
 }

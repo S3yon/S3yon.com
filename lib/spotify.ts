@@ -19,6 +19,11 @@ const getAccessToken = async () => {
     }),
   });
 
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Failed to get access token: ${response.status} ${text}`);
+  }
+
   return response.json();
 };
 
