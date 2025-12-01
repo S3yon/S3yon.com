@@ -15,13 +15,14 @@ interface NowPlaying {
 export default function SpotifyNowPlaying() {
   const [nowPlaying, setNowPlaying] = useState<NowPlaying>({ isPlaying: false });
   const [barHeights, setBarHeights] = useState<number[]>(
-    Array.from({ length: 80 }, () => 2)
+    Array.from({ length: 60 }, () => 1)
   );
   const [targetHeights, setTargetHeights] = useState<number[]>(
-    Array.from({ length: 80 }, () => 2)
+    Array.from({ length: 60 }, () => 1)
   );
   const [animationPhase, setAnimationPhase] = useState<'idle' | 'starting' | 'playing' | 'stopping'>('idle');
   const [prevPlaying, setPrevPlaying] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(0);
 
   // Fetch current track
   useEffect(() => {
@@ -32,10 +33,28 @@ export default function SpotifyNowPlaying() {
     };
 
     fetchNowPlaying();
-    const interval = setInterval(fetchNowPlaying, 5000); // Refresh every 5 seconds
+    const interval = setInterval(fetchNowPlaying, 15000);
 
     return () => clearInterval(interval);
   }, []);
+
+  // Set initial animation phase on mount and when track info changes
+  useEffect(() => {
+    if (nowPlaying.title) {
+      // If we have track info (playing or last played), keep animating
+      if (nowPlaying.isPlaying && animationPhase !== 'playing' && animationPhase !== 'starting') {
+        setAnimationPhase('starting');
+        setTimeout(() => setAnimationPhase('playing'), 800);
+      } else if (!nowPlaying.isPlaying && animationPhase === 'idle') {
+        // Last played song - use playing animation
+        setAnimationPhase('playing');
+      }
+    } else if (!nowPlaying.title && animationPhase !== 'idle') {
+      // No track info at all - go to idle
+      setAnimationPhase('stopping');
+      setTimeout(() => setAnimationPhase('idle'), 1000);
+    }
+  }, [nowPlaying.isPlaying, nowPlaying.title, animationPhase]);
 
   // Handle play state changes
   useEffect(() => {
@@ -44,107 +63,119 @@ export default function SpotifyNowPlaying() {
         setAnimationPhase('starting');
         setTimeout(() => setAnimationPhase('playing'), 800);
       } else {
-        setAnimationPhase('stopping');
-        setTimeout(() => setAnimationPhase('idle'), 1000);
+        if (nowPlaying.title) {
+          // Keep playing animation for last played song
+          setAnimationPhase('playing');
+        } else {
+          setAnimationPhase('stopping');
+          setTimeout(() => setAnimationPhase('idle'), 1000);
+        }
       }
       setPrevPlaying(nowPlaying.isPlaying);
     }
-  }, [nowPlaying.isPlaying, prevPlaying]);
+  }, [nowPlaying.isPlaying, prevPlaying, nowPlaying.title]);
 
-  // Animate visualizer bars
+  // Animate visualizer bars using requestAnimationFrame for better performance
   useEffect(() => {
-    const interval = setInterval(() => {
+    let animationFrameId: number;
+    const UPDATE_INTERVAL = 80; // Slightly faster for smoother animation
+
+    const animate = () => {
       const time = Date.now();
 
-      if (animationPhase === 'starting') {
-        // Startup animation - bars rise in a wave
-        setTargetHeights(prev =>
-          prev.map((_, i) => {
-            const wavePosition = (time / 50) % 80;
-            const distance = Math.abs(i - wavePosition);
-            if (distance < 10) {
-              const intensity = 1 - (distance / 10);
-              return Math.floor(intensity * 12);
-            }
-            return 1;
+      if (time - lastUpdateTime >= UPDATE_INTERVAL) {
+        setLastUpdateTime(time);
+
+        if (animationPhase === 'starting') {
+          setTargetHeights(prev =>
+            prev.map(() => {
+              const progress = (time % 800) / 800;
+              return Math.floor(progress * 24);
+            })
+          );
+        } else if (animationPhase === 'playing') {
+          setTargetHeights(prev =>
+            prev.map((_, i) => {
+              const seed = i * 0.5;
+              // Smoother, more fluid waves
+              const wave1 = Math.sin(time / 350 + seed) * 0.45;
+              const wave2 = Math.sin(time / 500 + seed * 1.3) * 0.3;
+              const wave3 = Math.sin(time / 700 + seed * 0.7) * 0.2;
+              const baseHeight = Math.abs(wave1 + wave2 + wave3);
+              // Reduced randomness for smoother flow
+              const randomness = Math.random() * 0.25;
+              const spike = Math.random() > 0.92 ? Math.random() * 0.4 : 0; // 8% chance of spike
+              const height = Math.floor((baseHeight + randomness + spike) * 24);
+              return Math.max(1, Math.min(24, height));
+            })
+          );
+        } else if (animationPhase === 'stopping') {
+          setTargetHeights(prev =>
+            prev.map((_, i) => {
+              const cascadeDelay = i * 15;
+              const timeSinceStopping = time % 1000;
+              if (timeSinceStopping > cascadeDelay) {
+                const dropProgress = Math.min(1, (timeSinceStopping - cascadeDelay) / 200);
+                const currentHeight = prev[i];
+                return Math.floor(currentHeight * (1 - dropProgress * 0.8));
+              }
+              return prev[i];
+            })
+          );
+        } else {
+          setTargetHeights(Array.from({ length: 60 }, (_, i) => {
+            const idleWave = Math.sin(time / 2000 + i * 0.2) * 0.3 + 1.3;
+            return (i % 8 === 0 || i % 8 === 4) ? Math.floor(idleWave) : 1;
+          }));
+        }
+
+        setBarHeights(prev =>
+          prev.map((height, i) => {
+            const target = targetHeights[i];
+            const diff = target - height;
+            if (Math.abs(diff) < 0.1) return height;
+
+            // Smoother easing for fluid motion
+            const easing = animationPhase === 'stopping' ? 0.15 :
+                           animationPhase === 'starting' ? 0.3 : 0.28;
+            return height + diff * easing;
           })
         );
-      } else if (animationPhase === 'playing') {
-        // Normal playing animation
-        setTargetHeights(prev =>
-          prev.map((_, i) => {
-            const wave1 = Math.sin(time / 300 + i * 0.1) * 0.3;
-            const wave2 = Math.sin(time / 200 + i * 0.2) * 0.2;
-            const wave3 = Math.sin(time / 400 + i * 0.15) * 0.2;
-            const baseHeight = (wave1 + wave2 + wave3) + 0.5;
-            const randomness = Math.random() * 0.2;
-            const height = Math.floor((baseHeight + randomness) * 12);
-            return Math.max(2, Math.min(12, height));
-          })
-        );
-      } else if (animationPhase === 'stopping') {
-        // Stopping animation - cascade drop effect
-        setTargetHeights(prev =>
-          prev.map((_, i) => {
-            const cascadeDelay = i * 15; // Delay for cascade effect
-            const timeSinceStopping = time % 1000;
-            if (timeSinceStopping > cascadeDelay) {
-              const dropProgress = Math.min(1, (timeSinceStopping - cascadeDelay) / 200);
-              const currentHeight = prev[i];
-              return Math.floor(currentHeight * (1 - dropProgress * 0.8));
-            }
-            return prev[i];
-          })
-        );
-      } else {
-        // Idle state - minimal movement
-        setTargetHeights(Array.from({ length: 80 }, (_, i) => {
-          const idleWave = Math.sin(time / 2000 + i * 0.2) * 0.3 + 1.3;
-          return (i % 8 === 0 || i % 8 === 4) ? Math.floor(idleWave) : 1;
-        }));
       }
 
-      // Smooth transition to target heights
-      setBarHeights(prev =>
-        prev.map((height, i) => {
-          const target = targetHeights[i];
-          const diff = target - height;
-          // Different easing based on animation phase
-          const easing = animationPhase === 'stopping' ? 0.15 :
-                         animationPhase === 'starting' ? 0.25 : 0.3;
-          return height + diff * easing;
-        })
-      );
-    }, 40); // Faster updates for smoother animations
+      animationFrameId = requestAnimationFrame(animate);
+    };
 
-    return () => clearInterval(interval);
-  }, [animationPhase, targetHeights]);
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [animationPhase, targetHeights, lastUpdateTime]);
 
   return (
-    <div className="bg-retro-gray-dark border-4 border-retro-black rounded-lg overflow-hidden shadow-lg">
+    <div className="relative bg-retro-gray-dark dark:bg-retro-black border-4 border-retro-black dark:border-retro-tan rounded-lg overflow-hidden shadow-lg transition-colors duration-300">
       {/* Top section - Album art and track info */}
-      <div className="p-3 sm:p-4 bg-retro-gray-dark">
+      <div className="relative p-3 sm:p-4 bg-retro-gray-dark dark:bg-retro-black transition-colors duration-300">
         <div className="flex items-center gap-2 mb-2 sm:mb-3">
           {nowPlaying.isPlaying ? (
             <>
-              <div className="w-2 h-2 bg-retro-white rounded-full animate-pulse"></div>
-              <p className="text-[10px] font-pixel text-retro-white">NOW PLAYING</p>
+              <div className="w-2 h-2 bg-retro-white dark:bg-retro-tan rounded-full animate-pulse transition-colors duration-300"></div>
+              <p className="text-[10px] font-pixel text-retro-white dark:text-retro-tan transition-colors duration-300">NOW PLAYING</p>
             </>
           ) : nowPlaying.title ? (
-            <p className="text-[10px] font-pixel text-retro-white">LAST PLAYED</p>
+            <p className="text-[10px] font-pixel text-retro-white dark:text-retro-tan transition-colors duration-300">LAST PLAYED</p>
           ) : (
-            <p className="text-[10px] font-pixel text-retro-white">NOT PLAYING</p>
+            <p className="text-[10px] font-pixel text-retro-white dark:text-retro-tan transition-colors duration-300">NOT PLAYING</p>
           )}
         </div>
 
         {!nowPlaying.title ? (
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-retro-black rounded border-2 border-retro-gray flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-retro-black dark:bg-retro-gray-dark rounded border-2 border-retro-gray dark:border-retro-tan-dark flex items-center justify-center text-xl sm:text-2xl flex-shrink-0 transition-colors duration-300">
               🎵
             </div>
             <div>
-              <p className="text-[10px] sm:text-xs font-pixel text-retro-white">No Recent Tracks</p>
-              <p className="text-[9px] sm:text-[10px] font-pixel text-retro-gray-light">Spotify</p>
+              <p className="text-[10px] sm:text-xs font-pixel text-retro-white dark:text-retro-tan transition-colors duration-300">No Recent Tracks</p>
+              <p className="text-[9px] sm:text-[10px] font-pixel text-retro-gray-light dark:text-retro-tan-dark transition-colors duration-300">Spotify</p>
             </div>
           </div>
         ) : (
@@ -155,7 +186,7 @@ export default function SpotifyNowPlaying() {
             className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity"
           >
             {nowPlaying.albumImageUrl && (
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 border-2 border-retro-black flex-shrink-0">
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 border-2 border-retro-black dark:border-retro-tan flex-shrink-0 transition-colors duration-300">
                 <Image
                   src={nowPlaying.albumImageUrl}
                   alt={nowPlaying.album || 'Album cover'}
@@ -166,11 +197,11 @@ export default function SpotifyNowPlaying() {
               </div>
             )}
 
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-pixel text-retro-white truncate mb-1">
+            <div className="flex-1 min-w-0 pr-2">
+              <p className="text-xs sm:text-sm font-pixel text-retro-white dark:text-retro-tan mb-1 transition-colors duration-300 break-words overflow-wrap-anywhere leading-tight">
                 {nowPlaying.title}
               </p>
-              <p className="text-[9px] sm:text-[10px] font-pixel text-retro-gray-light truncate">
+              <p className="text-[9px] sm:text-[10px] font-pixel text-retro-gray-light dark:text-retro-tan-dark transition-colors duration-300 break-words overflow-wrap-anywhere leading-tight">
                 {nowPlaying.artist}
               </p>
             </div>
@@ -179,21 +210,21 @@ export default function SpotifyNowPlaying() {
       </div>
 
       {/* Visualizer section - Retro LED Matrix Style */}
-      <div className="relative bg-retro-black border-t-2 border-retro-gray overflow-hidden">
+      <div className="relative bg-retro-black dark:bg-retro-gray-dark border-t-2 border-retro-gray dark:border-retro-tan-dark overflow-hidden transition-colors duration-300">
         {/* Grid background for LED matrix effect */}
         <div className="absolute inset-0 visualizer-grid pointer-events-none"></div>
 
         {/* Visualizer bars */}
         <div
-          className={`relative grid items-end gap-[1px] px-1 py-1 visualizer-${animationPhase}`}
+          className={`relative grid items-end gap-[2px] px-2 py-2 visualizer-${animationPhase}`}
           style={{
-            gridTemplateColumns: 'repeat(80, minmax(0, 1fr))',
-            height: '40px'
+            gridTemplateColumns: 'repeat(60, minmax(0, 1fr))',
+            height: '80px'
           }}
         >
-          {Array.from({ length: 80 }).map((_, col) => (
+          {Array.from({ length: 60 }).map((_, col) => (
             <div key={col} className="flex flex-col-reverse sound-wave-bar h-full">
-              {Array.from({ length: 12 }).map((_, row) => {
+              {Array.from({ length: 24 }).map((_, row) => {
                 const height = Math.floor(barHeights[col]);
                 const isActive = row < height;
                 const isTop = row === height - 1;

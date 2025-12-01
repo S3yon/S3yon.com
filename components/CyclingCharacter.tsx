@@ -26,8 +26,8 @@ export default function CyclingCharacter() {
       <Image
         src={frames[currentFrame]}
         alt="Cycling character"
-        width={64}
-        height={64}
+        width={36}
+        height={36}
         className="pixelated cycling-sprite"
         priority
       />

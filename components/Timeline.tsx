@@ -146,10 +146,16 @@ export default function Timeline() {
       const observer = new IntersectionObserver(
         ([entry]) => {
           if (entry.isIntersecting) {
-            setVisibleEvents((prev) => new Set([...prev, index]));
+            // Add a small delay for stagger effect based on index
+            setTimeout(() => {
+              setVisibleEvents((prev) => new Set([...prev, index]));
+            }, index * 50); // 50ms stagger between items
           }
         },
-        { threshold: 0.3 }
+        {
+          threshold: 0.2,
+          rootMargin: '-50px 0px -50px 0px' // Trigger slightly before/after viewport edge
+        }
       );
 
       observer.observe(ref);
@@ -159,7 +165,7 @@ export default function Timeline() {
     return () => {
       observers.forEach((observer) => observer?.disconnect());
     };
-  }, []);
+  }, []); // Remove visibleEvents dependency to prevent re-render issues
 
   const getTypeIcon = (type: TimelineEvent['type']) => {
     switch (type) {
@@ -170,8 +176,8 @@ export default function Timeline() {
   };
 
   return (
-    <div className="space-y-4 md:space-y-6">
-      <h2 className="text-sm sm:text-lg md:text-xl font-pixel text-retro-white border-l-4 border-retro-white pl-2 sm:pl-3 mb-4 md:mb-6">
+    <div className="space-y-4 sm:space-y-6">
+      <h2 className="text-sm sm:text-base lg:text-lg font-pixel text-retro-white dark:text-retro-tan border-l-4 border-retro-white dark:border-retro-tan pl-3 mb-4 sm:mb-6">
         TIMELINE
       </h2>
 
@@ -179,67 +185,83 @@ export default function Timeline() {
         <div
           key={index}
           ref={(el) => { eventRefs.current[index] = el; }}
-          className="border-2 border-retro-gray rounded p-3 sm:p-4 bg-retro-gray-dark"
+          className="border-2 border-retro-gray dark:border-retro-tan-dark rounded p-3 sm:p-4 lg:p-5 bg-retro-gray-dark dark:bg-retro-black transition-colors duration-300 w-full"
         >
-          <div className={`transition-opacity duration-500 ${visibleEvents.has(index) ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`timeline-item ${
+            visibleEvents.has(index) ? 'visible' : ''
+          }`}>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2">
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] sm:text-[10px] font-pixel text-retro-gray-light">{getTypeIcon(event.type)}</span>
-                <span className="text-[9px] sm:text-[10px] font-pixel text-retro-gray-light">{event.date}</span>
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] sm:text-[11px] lg:text-xs font-pixel text-retro-gray-light dark:text-retro-tan-dark transition-colors duration-300 shrink-0">
+                  {getTypeIcon(event.type)}
+                </span>
+                <span className="text-[10px] sm:text-[11px] lg:text-xs font-pixel text-retro-gray-light dark:text-retro-tan-dark transition-colors duration-300 break-words overflow-wrap-anywhere">
+                  {event.date}
+                </span>
               </div>
               {event.award && (
-                <span className="text-[8px] sm:text-[10px] bg-retro-white text-retro-black px-2 py-1 rounded font-pixel">
+                <span className="text-[9px] sm:text-[10px] lg:text-[11px] bg-retro-white dark:bg-retro-tan text-retro-black dark:text-retro-black px-2 py-1 rounded font-pixel transition-colors duration-300 break-words overflow-wrap-anywhere leading-relaxed inline-block max-w-full">
                   {event.award}
                 </span>
               )}
             </div>
 
             {/* Title & Company */}
-            <h3 className="text-xs sm:text-sm font-pixel text-retro-white mb-1">{event.title}</h3>
+            <h3 className="text-xs sm:text-sm lg:text-base font-pixel text-retro-white dark:text-retro-tan mb-2 break-words overflow-wrap-anywhere leading-relaxed">
+              {event.title}
+            </h3>
             {event.company && (
-              <p className="text-[9px] sm:text-[10px] font-pixel text-retro-gray-light mb-2">{event.company}</p>
-            )}
-
-            {/* Description */}
-            <p className="text-[9px] sm:text-[10px] font-pixel text-retro-white mb-2 leading-relaxed">{event.description}</p>
-
-            {/* Tech Stack */}
-            {event.tech && (
-              <p className="text-[9px] sm:text-[10px] font-pixel text-retro-gray-light mb-2 leading-relaxed">
-                <span className="font-bold">Tech:</span> {event.tech}
+              <p className="text-[10px] sm:text-[11px] lg:text-xs font-pixel text-retro-gray-light dark:text-retro-tan-dark mb-2 sm:mb-3 break-words overflow-wrap-anywhere leading-relaxed">
+                {event.company}
               </p>
             )}
 
-            {/* Achievements with typing effect */}
-            <div className="space-y-1">
+            {/* Description */}
+            <p className="text-[10px] sm:text-[11px] lg:text-xs font-pixel text-retro-white dark:text-retro-tan mb-2 sm:mb-3 leading-relaxed break-words overflow-wrap-anywhere hyphens-auto" lang="en">
+              {event.description}
+            </p>
+
+            {/* Tech Stack */}
+            {event.tech && (
+              <div className="bg-retro-black dark:bg-retro-gray-dark border-l-2 border-retro-gray dark:border-retro-tan-dark pl-2 sm:pl-3 py-1 sm:py-2 mb-2 sm:mb-3 w-full">
+                <p className="text-[9px] sm:text-[10px] lg:text-[11px] font-pixel text-retro-gray-light dark:text-retro-tan-dark leading-relaxed break-words overflow-wrap-anywhere hyphens-auto" lang="en">
+                  {event.tech}
+                </p>
+              </div>
+            )}
+
+            {/* Achievements with stagger animation */}
+            <div className="space-y-1 sm:space-y-2 mb-2 sm:mb-3 w-full">
               {event.achievements.map((achievement, idx) => (
-                <p
+                <div
                   key={idx}
-                  className={`text-[9px] sm:text-[10px] font-pixel text-retro-white typing-text ${
-                    visibleEvents.has(index) ? 'typing' : ''
+                  className={`achievement-item ${
+                    visibleEvents.has(index) ? 'visible' : ''
                   }`}
                   style={{
-                    animationDelay: `${idx * 0.3}s`,
+                    animationDelay: `${0.3 + idx * 0.1}s`,
                   }}
                 >
-                  {`> ${achievement}`}
-                </p>
+                  <p className="text-[10px] sm:text-[11px] lg:text-xs font-pixel text-retro-white dark:text-retro-tan break-words overflow-wrap-anywhere leading-relaxed hyphens-auto" lang="en">
+                    {`▸ ${achievement}`}
+                  </p>
+                </div>
               ))}
             </div>
 
             {/* Links */}
             {event.links && event.links.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-3 pt-2 sm:pt-3 border-t border-retro-gray dark:border-retro-tan-dark">
                 {event.links.map((link, idx) => (
                   <a
                     key={idx}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[9px] sm:text-[10px] font-pixel text-retro-white underline hover:text-retro-gray-light"
+                    className="text-[10px] sm:text-[11px] lg:text-xs font-pixel text-retro-white dark:text-retro-tan bg-retro-black dark:bg-retro-gray-dark px-2 sm:px-3 py-1 sm:py-1.5 border border-retro-gray dark:border-retro-tan-dark hover:bg-retro-gray dark:hover:bg-retro-gray transition-colors inline-block"
                   >
-                    [{link.label}]
+                    {link.label} →
                   </a>
                 ))}
               </div>
