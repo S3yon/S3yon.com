@@ -403,12 +403,9 @@ export default function Home() {
             <div className="flex flex-col md:flex-row items-center gap-4 md:gap-5 lg:gap-6">
               <RetroAvatar />
               <div className="text-center md:text-left">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-pixel text-retro-white dark:text-retro-tan mb-3 transition-colors duration-300">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-pixel text-retro-white dark:text-retro-tan mb-5 transition-colors duration-300">
                   SEYON SRI
                 </h1>
-                <p className="text-xs sm:text-sm font-pixel text-retro-gray-light dark:text-retro-tan-dark mb-5 transition-colors duration-300">
-                  Software Developer · Student · GTA, Canada
-                </p>
 
                 {/* Social Icons */}
                 <div className="flex gap-2 sm:gap-3 justify-center md:justify-start flex-wrap">
@@ -440,7 +437,7 @@ export default function Home() {
             <div className="space-y-6 lg:space-y-7 xl:space-y-8">
 
               {/* Spotify Now Playing */}
-              <section>
+              <section className="spotify-section-startup">
                 <SpotifyNowPlaying />
               </section>
 
