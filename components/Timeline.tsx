@@ -23,7 +23,7 @@ interface ScrollProgress {
 export default function Timeline() {
   const [scrollProgress, setScrollProgress] = useState<Map<number, ScrollProgress>>(new Map());
   const eventRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const rafRef = useRef<number>();
+  const rafRef = useRef<number | undefined>(undefined);
 
   const events: TimelineEvent[] = [
     {
