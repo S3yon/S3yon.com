@@ -139,18 +139,6 @@ export default function Home() {
           <Image src="/small-widget-2@3x.png" alt="building" width={130} height={130} className="pixelated opacity-80" loading="lazy" />
         </div>
 
-        {/* Truck - positioned on right side */}
-        <div className="building-parallax absolute right-15 top-[52%]" style={{ animationDelay: '2.4s', zIndex: 10 }}>
-          <Image
-            src="/truck.png"
-            alt="truck"
-            width={50}
-            height={50}
-            className="pixelated opacity-90"
-            priority
-          />
-        </div>
-
         {/* Villager on left side of road */}
         <div className="building-parallax absolute right-[285px] top-[40%]" style={{ animationDelay: '3.5s' }}>
           <Villager name="oak" startPosition={{ x: 0, y: 0 }} scale={1.3} />
