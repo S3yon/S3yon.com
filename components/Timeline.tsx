@@ -28,6 +28,16 @@ export default function Timeline() {
   const events: TimelineEvent[] = [
     {
       date: 'November 2025',
+      type: 'Volunteer',
+      title: 'Mentor',
+      company: 'Sheridan Datathon',
+      description: 'Mentored participants at the Sheridan Datathon 2025, guiding teams through their ideas and data approaches',
+      achievements: [
+        'Provided guidance to teams working on data science and machine learning challenges',
+      ],
+    },
+    {
+      date: 'November 2025',
       type: 'Project',
       title: 'HemoStat',
       award: 'Most Impactful Award @ DevOps for GenAI',
@@ -38,17 +48,6 @@ export default function Timeline() {
       ],
       links: [
         { label: 'GitHub', url: 'https://github.com/S3yon/HemoStat' },
-      ],
-    },
-    {
-      date: 'November 2025',
-      type: 'Project',
-      title: 'AI Datathon',
-      company: 'Sheridan Centre for Applied AI',
-      description: 'Predictive analytics solution built under time constraints using ML and real-world datasets',
-      tech: 'Python, Pandas, Scikit-Learn, Matplotlib, XGBoost',
-      achievements: [
-        'Developed high-performing ML pipeline for fast exploratory modeling and visualization',
       ],
     },
     {
