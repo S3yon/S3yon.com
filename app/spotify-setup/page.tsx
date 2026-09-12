@@ -1,80 +1,78 @@
 'use client';
 
-export default function SpotifySetup() {
-  const clientId = '449fcc54be8b41d194a25e2904862e55';
-  const redirectUri = 'http://127.0.0.1:3000/callback';
-  const scopes = 'user-read-currently-playing user-read-recently-played';
+import { useEffect, useState } from 'react';
 
-  const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes)}`;
+const CLIENT_ID = '449fcc54be8b41d194a25e2904862e55';
+const SCOPES = 'user-read-currently-playing user-read-recently-played';
+
+export default function SpotifySetup() {
+  const [origin, setOrigin] = useState('');
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const redirectUri = origin ? `${origin}/callback` : '';
+  const authUrl = redirectUri
+    ? `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
+        redirectUri
+      )}&scope=${encodeURIComponent(SCOPES)}`
+    : '';
 
   return (
-    <div className="min-h-screen bg-retro-white retro-scanlines p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-retro-gray-dark border-4 border-retro-black rounded-lg p-8">
-          <div className="bg-retro-black rounded border-2 border-retro-gray p-6">
-            <h1 className="text-xl font-pixel text-retro-white mb-6 border-b-2 border-retro-gray pb-4">
-              SPOTIFY SETUP
-            </h1>
+    <main className="mx-auto max-w-2xl px-6 py-16">
+      <h1 className="font-heading text-3xl font-extrabold tracking-[-0.02em]">Spotify setup</h1>
+      <p className="mt-3 text-[15px] text-muted">
+        One-time flow to generate a new <code className="text-ink">SPOTIFY_REFRESH_TOKEN</code>.
+      </p>
 
-            <div className="space-y-6">
-              <div className="bg-retro-gray-dark p-4 rounded border border-retro-gray">
-                <p className="text-xs font-pixel text-retro-white mb-4">
-                  STEP 1: Add Redirect URI
-                </p>
-                <p className="text-[10px] font-pixel text-retro-gray-light mb-2">
-                  In your Spotify app settings, add this redirect URI:
-                </p>
-                <div className="bg-retro-black p-3 rounded border border-retro-gray">
-                  <code className="text-[10px] font-mono text-retro-white">
-                    {redirectUri}
-                  </code>
-                </div>
-              </div>
+      <ol className="mt-10 space-y-8">
+        <li>
+          <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.16em] text-accent">
+            1 · Register this redirect URI
+          </h2>
+          <p className="mt-2 text-[15px] text-muted">
+            In the Spotify developer dashboard → your app → Settings → Redirect URIs, add this
+            exactly (no trailing slash), then Save:
+          </p>
+          <pre className="mt-3 overflow-x-auto border border-rule bg-ink/[0.04] p-3 text-[13px]">
+            {redirectUri || 'loading…'}
+          </pre>
+          <p className="mt-2 text-[13px] text-faint">
+            Spotify rejects <code>localhost</code> — open this page at{' '}
+            <code className="text-muted">http://127.0.0.1:3000/spotify-setup</code> instead.
+          </p>
+        </li>
 
-              <div className="bg-retro-gray-dark p-4 rounded border border-retro-gray">
-                <p className="text-xs font-pixel text-retro-white mb-4">
-                  STEP 2: Authorize Your App
-                </p>
-                <p className="text-[10px] font-pixel text-retro-gray-light mb-3">
-                  Click the button below to authorize Spotify:
-                </p>
-                <a
-                  href={authUrl}
-                  className="block w-full bg-retro-white border-4 border-retro-black rounded p-4 text-center font-pixel text-xs text-retro-black hover:bg-retro-gray-light transition-colors"
-                >
-                  AUTHORIZE SPOTIFY
-                </a>
-              </div>
+        <li>
+          <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.16em] text-accent">
+            2 · Authorize
+          </h2>
+          <p className="mt-2 text-[15px] text-muted">
+            Only works once the URI above is saved in the dashboard.
+          </p>
+          {authUrl && (
+            <a
+              href={authUrl}
+              className="mt-4 inline-block bg-ink px-5 py-3 font-heading text-[12px] font-bold uppercase tracking-[0.16em] text-paper transition-colors hover:bg-accent"
+            >
+              Authorize Spotify
+            </a>
+          )}
+        </li>
 
-              <div className="bg-retro-gray-dark p-4 rounded border border-retro-gray">
-                <p className="text-xs font-pixel text-retro-white mb-3">
-                  Configuration Details:
-                </p>
-                <div className="space-y-2 text-[10px] font-pixel text-retro-gray-light">
-                  <div>
-                    <span className="text-retro-white">Client ID:</span> {clientId}
-                  </div>
-                  <div>
-                    <span className="text-retro-white">Redirect URI:</span> {redirectUri}
-                  </div>
-                  <div>
-                    <span className="text-retro-white">Scopes:</span> {scopes}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 pt-6 border-t-2 border-retro-gray">
-              <a
-                href="/"
-                className="text-[10px] font-pixel text-retro-white hover:text-retro-gray-light transition-colors"
-              >
-                ← BACK TO HOME
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <li>
+          <h2 className="font-heading text-[13px] font-bold uppercase tracking-[0.16em] text-accent">
+            3 · Save the token
+          </h2>
+          <p className="mt-2 text-[15px] text-muted">
+            The callback page shows a refresh token. Paste it into{' '}
+            <code className="text-ink">.env.local</code> as{' '}
+            <code className="text-ink">SPOTIFY_REFRESH_TOKEN</code>, restart the dev server, and
+            add it to Vercel&apos;s environment variables before redeploying.
+          </p>
+        </li>
+      </ol>
+    </main>
   );
 }

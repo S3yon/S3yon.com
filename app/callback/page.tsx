@@ -1,109 +1,99 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-function SpotifyCallbackContent() {
+function CallbackContent() {
   const searchParams = useSearchParams();
-  const [code, setCode] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<'working' | 'done' | 'error'>('working');
+  const [token, setToken] = useState('');
+  const [message, setMessage] = useState('Exchanging your authorization code…');
 
   useEffect(() => {
-    const authCode = searchParams.get('code');
+    const code = searchParams.get('code');
     const authError = searchParams.get('error');
 
-    if (authCode) {
-      setCode(authCode);
-    }
     if (authError) {
-      setError(authError);
+      setStatus('error');
+      setMessage(`Spotify returned: ${authError}`);
+      return;
     }
+    if (!code) {
+      setStatus('error');
+      setMessage('No authorization code in the URL. Start again from /spotify-setup.');
+      return;
+    }
+
+    fetch('/api/spotify/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, redirectUri: `${window.location.origin}/callback` }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.refresh_token) {
+          setToken(data.refresh_token);
+          setStatus('done');
+        } else {
+          setStatus('error');
+          setMessage(data.error || 'No refresh token returned.');
+        }
+      })
+      .catch((e) => {
+        setStatus('error');
+        setMessage(e instanceof Error ? e.message : 'Request failed.');
+      });
   }, [searchParams]);
+
+  if (status === 'working') {
+    return <p className="text-[15px] text-muted">{message}</p>;
+  }
+
+  if (status === 'error') {
+    return (
+      <>
+        <p className="text-[15px] text-accent">{message}</p>
+        <p className="mt-4 text-[14px] text-faint">
+          An <code>invalid_grant</code> usually means the code was already used — each one works
+          once. Go back to <code className="text-muted">/spotify-setup</code> and authorize again.
+        </p>
+      </>
+    );
+  }
 
   return (
     <>
-      {code && (
-        <div className="space-y-4">
-          <p className="text-xs font-pixel text-retro-white mb-4">
-            Success! Copy this authorization code:
-          </p>
-
-          <div className="bg-retro-gray-dark p-4 rounded border border-retro-gray">
-            <code className="text-[10px] font-mono text-retro-white break-all">
-              {code}
-            </code>
-          </div>
-
-          <div className="mt-6 p-4 bg-retro-gray-dark rounded border border-retro-gray">
-            <p className="text-[10px] font-pixel text-retro-white mb-3">
-              NEXT STEPS:
-            </p>
-            <ol className="text-[10px] font-pixel text-retro-gray-light space-y-2 list-decimal list-inside">
-              <li>Copy the code above</li>
-              <li>Follow step 6 in SPOTIFY_SETUP.md</li>
-              <li>Use this code to get your refresh token</li>
-            </ol>
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="space-y-4">
-          <p className="text-xs font-pixel text-retro-white mb-4">
-            Authorization failed with error:
-          </p>
-
-          <div className="bg-retro-gray-dark p-4 rounded border border-retro-gray">
-            <code className="text-[10px] font-mono text-retro-white">
-              {error}
-            </code>
-          </div>
-        </div>
-      )}
-
-      {!code && !error && (
-        <div className="text-center">
-          <p className="text-xs font-pixel text-retro-gray-light">
-            Waiting for authorization...
-          </p>
-        </div>
-      )}
+      <p className="text-[15px] text-muted">
+        Done. Paste this into <code className="text-ink">.env.local</code> as{' '}
+        <code className="text-ink">SPOTIFY_REFRESH_TOKEN</code>, then restart the dev server.
+      </p>
+      <pre className="mt-4 overflow-x-auto border border-rule bg-ink/[0.04] p-3 text-[12px] leading-relaxed">
+        {token}
+      </pre>
+      <button
+        type="button"
+        onClick={() => navigator.clipboard.writeText(token)}
+        className="mt-4 bg-ink px-5 py-3 font-heading text-[12px] font-bold uppercase tracking-[0.16em] text-paper transition-colors hover:bg-accent"
+      >
+        Copy token
+      </button>
+      <p className="mt-6 text-[14px] text-faint">
+        Also add it to Vercel → Project → Settings → Environment Variables, then redeploy, or the
+        live site stays broken.
+      </p>
     </>
   );
 }
 
 export default function SpotifyCallback() {
   return (
-    <div className="min-h-screen bg-retro-white retro-scanlines p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-retro-gray-dark border-4 border-retro-black rounded-lg p-8">
-          <div className="bg-retro-black rounded border-2 border-retro-gray p-6">
-            <h1 className="text-xl font-pixel text-retro-white mb-6 border-b-2 border-retro-gray pb-4">
-              SPOTIFY AUTHORIZATION
-            </h1>
-
-            <Suspense fallback={
-              <div className="text-center">
-                <p className="text-xs font-pixel text-retro-gray-light">
-                  Loading...
-                </p>
-              </div>
-            }>
-              <SpotifyCallbackContent />
-            </Suspense>
-
-            <div className="mt-8 pt-6 border-t-2 border-retro-gray">
-              <a
-                href="/"
-                className="text-[10px] font-pixel text-retro-white hover:text-retro-gray-light transition-colors"
-              >
-                ← BACK TO HOME
-              </a>
-            </div>
-          </div>
-        </div>
+    <main className="mx-auto max-w-2xl px-6 py-16">
+      <h1 className="font-heading text-3xl font-extrabold tracking-[-0.02em]">Spotify callback</h1>
+      <div className="mt-6">
+        <Suspense fallback={<p className="text-[15px] text-muted">Loading…</p>}>
+          <CallbackContent />
+        </Suspense>
       </div>
-    </div>
+    </main>
   );
 }
