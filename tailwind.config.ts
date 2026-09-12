@@ -1,7 +1,6 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: 'class',
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -10,16 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'retro-black': '#0a0a0a',
-        'retro-gray-dark': '#2a2a2a',
-        'retro-gray': '#5a5a5a',
-        'retro-gray-light': '#9a9a9a',
-        'retro-white': '#e8e8e8',
-        'retro-tan': '#d4c5b9',
-        'retro-tan-dark': '#a89a8a',
+        // intro world — charcoal panel on a warm grey shell, chalk-grey type
+        shell: '#C9C8C4',
+        charcoal: '#212225',
+        chalk: '#C8C7C3',
+        // content world
+        paper: '#F4F3F0',
+        ink: '#18181A',
+        muted: '#61615F',
+        faint: '#93938F',
+        rule: '#DEDCD7',
+        accent: '#B4502A',
       },
       fontFamily: {
-        'pixel': ['"Press Start 2P"', 'cursive'],
+        display: ['var(--font-display)', 'Impact', 'sans-serif'],
+        heading: ['var(--font-heading)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
       },
     },
   },
