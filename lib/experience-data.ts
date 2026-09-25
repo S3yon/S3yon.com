@@ -269,4 +269,28 @@ export const upcoming: UpcomingEvent[] = [
     detail: 'Panel and networking on cross-collaboration beyond hackathons, then a Google Cloud Career Launchpad workshop.',
     url: 'https://gdg.community.dev/events/details/google-gdg-on-campus-sheridan-college-trafalgar-road-campus-oakville-canada-presents-get-into-gear-a-future-beyond-hackathons-cross-collaboration-in-the-professional-world/',
   },
+  {
+    date: '2026-10-04',
+    title: 'Case Closed @ GDG Sheridan',
+    detail: "Sheridan's one-day case competition across analytics, engineering and business strategy, judged by GTA industry leaders.",
+    url: 'https://gdg.community.dev/events/details/google-gdg-on-campus-sheridan-college-trafalgar-road-campus-oakville-canada-presents-get-into-gear-case-closed-sheridans-official-case-study-competition/',
+  },
+  {
+    date: '2026-10-16',
+    title: 'Hack the Valley 11',
+    detail: 'Hackathon at the University of Toronto Scarborough, October 16 to 18.',
+    url: 'https://hackthevalley.io/',
+  },
+  {
+    date: '2026-11-07',
+    title: 'Sheridan Datathon 2026 @ GDG Sheridan',
+    detail: '24-hour data hackathon for 250+ students at Sheridan HMC, turning real industry datasets into insights.',
+    url: 'https://gdg.community.dev/events/details/google-gdg-on-campus-sheridan-college-trafalgar-road-campus-oakville-canada-presents-get-into-gear-sheridan-datathon-2026/',
+  },
+  {
+    date: '2026-11-14',
+    title: 'NASA Space Apps Challenge Toronto',
+    detail: "NASA's global hackathon, Toronto local event at Centennial College Downsview, November 14 to 15.",
+    url: 'https://www.spaceappschallenge.org/2026/local-events/toronto/',
+  },
 ];
