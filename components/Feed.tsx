@@ -17,6 +17,8 @@ import Pikachu, { type PikaFacing } from './Pikachu';
 import { useInViewOnce, type ViewState } from '@/lib/use-in-view-once';
 import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
 import type { GithubStats } from '@/lib/github';
+import OnRotation from './OnRotation';
+import { useSpotify, type SpotifyState } from '@/lib/use-spotify';
 
 type FilterKey = 'all' | 'award' | EntryKind;
 
@@ -252,7 +254,9 @@ type Bubble = { id: number } & BubbleBody;
 //  - hops a little each time an entry pops in; celebrates awards with sparks and a "Pika!"
 //  - when the reader stops, breathes, then glances at the content and back, now and then
 //  - tap or click it: a mood portrait on the first tap and now and then, otherwise a "Pika!" line
-function Rail({ startsAtRow = false }: { startsAtRow?: boolean }) {
+//  - while Spotify is playing and it stands still, it bobs to the beat with notes floating up,
+//    and one of its tap lines is the song
+function Rail({ startsAtRow = false, music = null }: { startsAtRow?: boolean; music?: string | null }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [hopScope, animateHop] = useAnimate();
   const { scrollY } = useScroll();
@@ -299,7 +303,8 @@ function Rail({ startsAtRow = false }: { startsAtRow?: boolean }) {
       const options = TAP_MOODS.filter((m) => m !== lastMood.current);
       emote(options[Math.floor(Math.random() * options.length)]);
     } else {
-      speak(LINES[(taps.current - 1) % LINES.length]);
+      const lines = music ? [...LINES, `♪ ${music}`] : LINES;
+      speak(lines[(taps.current - 1) % lines.length]);
     }
   };
 
@@ -421,8 +426,24 @@ function Rail({ startsAtRow = false }: { startsAtRow?: boolean }) {
             }}
             className="pointer-events-auto block cursor-pointer"
           >
-            <Pikachu walking={walking} fast={fast} facing={facing} />
+            {/* while music plays and it's standing still, it bobs to the beat */}
+            <span className={`block ${music && !walking ? 'animate-[vibe_0.5s_ease-in-out_infinite]' : ''}`}>
+              <Pikachu walking={walking} fast={fast} facing={facing} />
+            </span>
           </button>
+          {music && !walking && (
+            <span aria-hidden className="pointer-events-none absolute left-9 top-4">
+              {['♪', '♫', '♪'].map((n, i) => (
+                <span
+                  key={i}
+                  className="absolute text-[14px] text-accent"
+                  style={{ animation: `note-float 2.4s ease-out ${(i * 0.8).toFixed(1)}s infinite` }}
+                >
+                  {n}
+                </span>
+              ))}
+            </span>
+          )}
 
           {/* award sparks */}
           <AnimatePresence>
@@ -640,9 +661,9 @@ function GithubRow({ github }: { github: GithubStats }) {
 }
 
 // Rows that sit on the rail above the years: what's next, and proof of steady work.
-function LeadRows({ github }: { github: GithubStats | null }) {
+function LeadRows({ github, spotify }: { github: GithubStats | null; spotify: SpotifyState | null }) {
   const next = useNextEvent();
-  if (!next && !github) return null;
+  if (!next && !github && !spotify?.recent.length) return null;
   return (
     <div className="pb-6">
       {next && (
@@ -674,6 +695,7 @@ function LeadRows({ github }: { github: GithubStats | null }) {
         </Reveal>
       )}
       {github && <GithubRow github={github} />}
+      <OnRotation spotify={spotify} />
     </div>
   );
 }
@@ -731,6 +753,7 @@ function FilterBar({
 }
 
 export default function Feed({ github = null }: { github?: GithubStats | null }) {
+  const { data: spotify } = useSpotify();
   const [filter, setFilter] = useState<FilterKey>('all');
   const [filtered, setFiltered] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
@@ -774,8 +797,8 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
             transition={{ duration: 0.45, ease: EASE }}
             className="relative"
           >
-            <Rail startsAtRow={filter === 'all'} />
-            {filter === 'all' && <LeadRows github={github} />}
+            <Rail startsAtRow={filter === 'all'} music={spotify?.isPlaying ? spotify.title ?? null : null} />
+            {filter === 'all' && <LeadRows github={github} spotify={spotify} />}
             {groups.map(({ year, entries }) => (
               <YearSection key={year} year={year} entries={entries} />
             ))}

@@ -31,12 +31,6 @@ export function useSpotify(pollMs = 20000) {
       try {
         const res = await fetch('/api/spotify/now-playing');
         const json = (await res.json()) as SpotifyState;
-        // /lab?demo previews the "playing" states even when nothing is playing right now
-        if (window.location.pathname === '/lab' && new URLSearchParams(window.location.search).has('demo') && json.title) {
-          json.isPlaying = true;
-          json.durationMs = json.durationMs || 200000;
-          json.progressMs = json.progressMs || 60000;
-        }
         if (alive) setData({ ...json, recent: json.recent ?? [], fetchedAt: Date.now() });
       } catch {
         if (alive) setData((d) => d ?? { isPlaying: false, recent: [] });
