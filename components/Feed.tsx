@@ -20,7 +20,7 @@ import type { GithubStats } from '@/lib/github';
 
 type FilterKey = 'all' | 'award' | EntryKind;
 
-const isAward = (e: FeedEntry) => /award|place/i.test(e.title);
+const isAward = (e: FeedEntry) => /award|place|top \d/i.test(e.title);
 
 const FILTERS: { key: FilterKey; label: string; match: (e: FeedEntry) => boolean }[] = [
   { key: 'all', label: 'All', match: () => true },

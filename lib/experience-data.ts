@@ -18,6 +18,16 @@ export interface FeedEntry {
 export const feed: FeedEntry[] = [
   {
     year: 2026,
+    month: 'September',
+    title: 'Photographer',
+    org: 'Hack the North',
+    orgUrl: 'https://www.linkedin.com/company/hack-the-north/',
+    kind: 'community',
+    description:
+      "Back on staff for a second year, shooting photos and video across the weekend at Canada's biggest hackathon.",
+  },
+  {
+    year: 2026,
     month: 'August',
     title: 'Lead Photographer',
     org: 'GDG Sheridan',
@@ -44,8 +54,8 @@ export const feed: FeedEntry[] = [
     kind: 'role',
     current: true,
     description:
-      'Building and maintaining data pipelines with Apache Airflow, deploying services across Azure and GCP, and containerizing microservices with Kubernetes in a fintech production environment.',
-    tags: ['Python', 'Apache Airflow', 'Kubernetes', 'Azure', 'Google Cloud', 'Docker'],
+      'Built end-of-day settlement reporting and workflow fixes for an internal trade settlement platform, and took an intern onboarding product from idea to working product with a team of five. This fall: an internal innovation project using AI to reduce manual compliance work.',
+    tags: ['SQL', 'ServiceNow', 'Full-stack'],
   },
   {
     year: 2026,
@@ -70,6 +80,16 @@ export const feed: FeedEntry[] = [
       { label: 'Live site', url: 'https://www.outfitted.ca/' },
       { label: 'GitHub', url: 'https://github.com/S3yon/Outfitted' },
     ],
+  },
+  {
+    year: 2026,
+    month: 'February',
+    title: 'Native iOS app — Top 6',
+    org: 'Stan x HackAI Toronto',
+    kind: 'project',
+    description:
+      'Our first Swift project: a native iOS app backed by AWS Lambda and S3, built as a team in a weekend. Finished in the top 6.',
+    tags: ['Swift', 'AWS Lambda', 'Amazon S3'],
   },
   {
     year: 2026,
@@ -130,8 +150,8 @@ export const feed: FeedEntry[] = [
     orgUrl: 'https://www.sheridancollege.ca/research/centres/applied-ai',
     kind: 'role',
     description:
-      'Developed diagnostic AI for telemedicine, reaching 97.2% accuracy on 6,000+ medical images and cutting false negatives from 42 to 5 through A/B tested augmentation. Deployed cross-platform with a FastAPI server, web client and mobile app.',
-    tags: ['PyTorch', 'ResNet', 'MobileNet', 'OpenCV', 'FastAPI', 'Docker'],
+      'Built pediatric pneumonia screening models on chest X-rays. The MobileNet baseline reached 97.6% accuracy and 95.8% sensitivity on 1,000 images, trained on a DGX with four V100 GPUs.',
+    tags: ['PyTorch', 'MobileNet', 'OpenCV'],
   },
   {
     year: 2025,
