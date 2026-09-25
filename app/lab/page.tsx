@@ -4,6 +4,7 @@ import ShutterSnap from '@/components/name-fx/ShutterSnap';
 import LightPainting from '@/components/name-fx/LightPainting';
 import Flashlight from '@/components/name-fx/Flashlight';
 import ThunderCharge from '@/components/name-fx/ThunderCharge';
+import FlashThunder from '@/components/name-fx/FlashThunder';
 
 export const metadata = { title: 'Name lab', robots: { index: false } };
 
@@ -14,6 +15,7 @@ const FX = [
   { n: 3, title: 'Light painting', how: 'Drag across the name. You leave a long-exposure light trail that fades.', C: LightPainting },
   { n: 4, title: 'Flashlight reveal', how: 'The name sits dim. Move around to light it up. The warm fill could be a real photo.', C: Flashlight },
   { n: 5, title: 'Thunder charge', how: 'Bring the cursor near the name, or tap. A bolt arcs to the nearest letter.', C: ThunderCharge },
+  { n: 6, title: 'Flashlight + thunder', how: 'Move to light it up; move fast and the light crackles. Click or tap to strike a letter: the whole name flashes lit.', C: FlashThunder },
 ];
 
 export default function Lab() {
@@ -22,7 +24,7 @@ export default function Lab() {
     <main className="min-h-screen bg-charcoal px-5 py-12 text-chalk sm:px-12">
       <p className="font-display text-[12px] tracking-[0.24em] text-chalk/50">NAME LAB · LOCAL ONLY</p>
       <p className="mt-2 max-w-[60ch] text-[15px] text-chalk/60">
-        Five ways the name on the cover could react. Try each one, then pick by number.
+        Six ways the name on the cover could react. Try each one, then pick by number.
       </p>
       {FX.map(({ n, title, how, C }) => (
         <section key={n} className="mt-14 border-t border-chalk/10 pt-8">

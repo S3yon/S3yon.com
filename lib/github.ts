@@ -6,6 +6,7 @@ export interface GithubStats {
   last30: number;
   thisYear: number;
   profileUrl: string;
+  fetchedAt: string;
 }
 
 const USER = 'S3yon';
@@ -14,7 +15,7 @@ export async function getGithubStats(now = new Date()): Promise<GithubStats | nu
   try {
     const res = await fetch(`https://github.com/users/${USER}/contributions`, {
       headers: { 'User-Agent': 'seyons.com' },
-      next: { revalidate: 21600 },
+      next: { revalidate: 3600 },
     });
     if (!res.ok) return null;
     const html = await res.text();
@@ -41,7 +42,7 @@ export async function getGithubStats(now = new Date()): Promise<GithubStats | nu
       if (date > cutoff) last30 += n;
       if (date >= yearStart) thisYear += n;
     }
-    return { last30, thisYear, profileUrl: `https://github.com/${USER}` };
+    return { last30, thisYear, profileUrl: `https://github.com/${USER}`, fetchedAt: now.toISOString() };
   } catch {
     return null;
   }

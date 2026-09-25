@@ -112,6 +112,34 @@
     animation: pika-breathe 1.6s ease-in-out infinite;
   }
 
+  /* Live GitHub marker: two rings radiate out in turn, the dot pings, the logo breathes. */
+  @keyframes live-ring {
+    0% { transform: scale(1); opacity: 0.55; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+
+  .animate-live-ring {
+    animation: live-ring 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  @keyframes live-dot {
+    0% { transform: scale(1); opacity: 0.8; }
+    80%, 100% { transform: scale(2.2); opacity: 0; }
+  }
+
+  .animate-live-dot {
+    animation: live-dot 1.6s ease-out infinite;
+  }
+
+  @keyframes live-breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  .animate-live-breathe {
+    animation: live-breathe 2.4s ease-in-out infinite;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-arc,
     .animate-intro-fade,
@@ -119,6 +147,9 @@
     .animate-bar,
     .animate-rise,
     .animate-scroll-cue,
+    .animate-live-ring,
+    .animate-live-dot,
+    .animate-live-breathe,
     .pika {
       animation: none !important;
     }

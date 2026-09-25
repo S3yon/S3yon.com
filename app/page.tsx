@@ -3,8 +3,8 @@ import Intro from '@/components/Intro';
 import Reveal from '@/components/Reveal';
 import { getGithubStats } from '@/lib/github';
 
-// Refresh the GitHub counts every 6 hours.
-export const revalidate = 21600;
+// Refresh the GitHub counts every hour.
+export const revalidate = 3600;
 
 export default async function Home() {
   const github = await getGithubStats();

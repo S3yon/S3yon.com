@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AnimatePresence,
+  animate,
   motion,
   useAnimate,
   useMotionValueEvent,
@@ -13,7 +14,7 @@ import {
 } from 'motion/react';
 import Reveal from './Reveal';
 import Pikachu, { type PikaFacing } from './Pikachu';
-import { useInViewOnce } from '@/lib/use-in-view-once';
+import { useInViewOnce, type ViewState } from '@/lib/use-in-view-once';
 import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
 import type { GithubStats } from '@/lib/github';
 
@@ -521,6 +522,96 @@ function useNextEvent(): { event: UpcomingEvent; when: string } | null {
   return next;
 }
 
+// Counts up from 0 the first time it scrolls into view. Renders the real number on the
+// server and without JS; only shows 0 while it is waiting to animate.
+function CountUp({ value, state, delay = 0 }: { value: number; state: ViewState; delay?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (state !== 'shown' || !ref.current) return;
+    const el = ref.current;
+    const controls = animate(0, value, {
+      duration: 1.6,
+      delay,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (v) => {
+        el.textContent = Math.round(v).toLocaleString('en-CA');
+      },
+    });
+    return () => controls.stop();
+  }, [state, value, delay]);
+  return (
+    <span ref={ref} className="tabular-nums">
+      {state === 'hidden' ? '0' : value.toLocaleString('en-CA')}
+    </span>
+  );
+}
+
+function ago(iso: string) {
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 2) return 'just now';
+  if (mins < 60) return `${mins} min ago`;
+  const h = Math.round(mins / 60);
+  return `${h} hour${h === 1 ? '' : 's'} ago`;
+}
+
+// "Still building": live public contribution counts. The marker pulses like a live signal
+// and the numbers count up from 0 the first time the row comes into view.
+function GithubRow({ github }: { github: GithubStats }) {
+  const ref = useRef<HTMLElement>(null);
+  const state = useInViewOnce(ref, { line: 0.85 });
+  const hidden = state === 'hidden';
+  const [updated, setUpdated] = useState<string | null>(null);
+  useEffect(() => setUpdated(ago(github.fetchedAt)), [github.fetchedAt]);
+
+  return (
+    <article ref={ref} className="relative grid gap-1.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
+      <span aria-hidden className="absolute left-0 top-0 z-10 h-9 w-9">
+        <span className="animate-live-ring absolute inset-0 rounded-full border border-[#2DA44E]" />
+        <span className="animate-live-ring absolute inset-0 rounded-full border border-[#2DA44E] [animation-delay:1.2s]" />
+        <motion.span
+          className="relative grid h-9 w-9 place-items-center rounded-full bg-ink text-paper"
+          initial={false}
+          animate={hidden ? { scale: 0.5, opacity: 0 } : { scale: 1, opacity: 1 }}
+          transition={hidden ? { duration: 0 } : { type: 'spring', stiffness: 260, damping: 18 }}
+        >
+          <svg className="animate-live-breathe" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2.02c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22v3.29c0 .32.21.7.82.58A12 12 0 0 0 12 .3Z" />
+          </svg>
+          {/* live dot */}
+          <span className="absolute -right-0.5 -top-0.5 grid h-3 w-3 place-items-center">
+            <span className="animate-live-dot absolute h-3 w-3 rounded-full bg-[#2DA44E]/50" />
+            <span className="relative h-2 w-2 rounded-full border border-paper bg-[#2DA44E]" />
+          </span>
+        </motion.span>
+      </span>
+
+      <motion.p
+        initial={false}
+        animate={hidden ? { opacity: 0, y: 14 } : { opacity: 1, y: 0 }}
+        transition={hidden ? { duration: 0 } : { duration: 0.55, ease: EASE }}
+        className="flex items-center gap-1.5 font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-[#2DA44E] sm:pt-2"
+      >
+        Live
+      </motion.p>
+      <motion.div
+        initial={false}
+        animate={hidden ? { opacity: 0, y: 14 } : { opacity: 1, y: 0 }}
+        transition={hidden ? { duration: 0 } : { duration: 0.55, ease: EASE, delay: 0.05 }}
+        className="min-w-0"
+      >
+        <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] sm:text-[21px]">Still building</h3>
+        <p className="mt-2 text-[15px] leading-relaxed text-muted">
+          <a href={github.profileUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline decoration-2 decoration-rule underline-offset-[4px] transition-colors hover:decoration-accent">
+            <CountUp value={github.last30} state={state} /> GitHub contributions
+          </a>{' '}
+          in the last 30 days, <CountUp value={github.thisYear} state={state} delay={0.15} /> this year.
+        </p>
+        {updated && <p className="mt-1 text-[12.5px] text-faint">Pulled from GitHub {updated}</p>}
+      </motion.div>
+    </article>
+  );
+}
+
 // Rows that sit on the rail above the years: what's next, and proof of steady work.
 function LeadRows({ github }: { github: GithubStats | null }) {
   const next = useNextEvent();
@@ -555,27 +646,7 @@ function LeadRows({ github }: { github: GithubStats | null }) {
           </article>
         </Reveal>
       )}
-      {github && (
-        <Reveal>
-          <article className="relative grid gap-1.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
-            <span aria-hidden className="absolute left-0 top-0 z-10 grid h-9 w-9 place-items-center rounded-full bg-ink text-paper">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2.02c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22v3.29c0 .32.21.7.82.58A12 12 0 0 0 12 .3Z" />
-              </svg>
-            </span>
-            <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-faint sm:pt-2">Lately</p>
-            <div className="min-w-0">
-              <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] sm:text-[21px]">Still building</h3>
-              <p className="mt-2 text-[15px] leading-relaxed text-muted">
-                <a href={github.profileUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline decoration-2 decoration-rule underline-offset-[4px] transition-colors hover:decoration-accent">
-                  {github.last30} GitHub contributions
-                </a>{' '}
-                in the last 30 days, {github.thisYear} this year.
-              </p>
-            </div>
-          </article>
-        </Reveal>
-      )}
+      {github && <GithubRow github={github} />}
     </div>
   );
 }
