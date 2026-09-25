@@ -8,13 +8,15 @@ export default function Reveal({
   children,
   delay = 0,
   className = '',
+  instantIfPast = false,
 }: {
   children: React.ReactNode;
   delay?: number;
   className?: string;
+  instantIfPast?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const hidden = useInViewOnce(ref) === 'hidden';
+  const hidden = useInViewOnce(ref, { instantIfPast }) === 'hidden';
 
   return (
     <div
