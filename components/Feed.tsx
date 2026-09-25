@@ -14,7 +14,8 @@ import {
 import Reveal from './Reveal';
 import Pikachu, { type PikaFacing } from './Pikachu';
 import { useInViewOnce } from '@/lib/use-in-view-once';
-import { feed, type FeedEntry, type EntryKind } from '@/lib/experience-data';
+import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
+import type { GithubStats } from '@/lib/github';
 
 type FilterKey = 'all' | 'award' | EntryKind;
 
@@ -250,7 +251,7 @@ type Bubble = { id: number } & BubbleBody;
 //  - hops a little each time an entry pops in; celebrates awards with sparks and a "Pika!"
 //  - when the reader stops, breathes, then glances at the content and back, now and then
 //  - tap or click it: a mood portrait on the first tap and now and then, otherwise a "Pika!" line
-function Rail() {
+function Rail({ startsAtRow = false }: { startsAtRow?: boolean }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [hopScope, animateHop] = useAnimate();
   const { scrollY } = useScroll();
@@ -369,7 +370,7 @@ function Rail() {
   return (
     <div
       ref={trackRef}
-      className="pointer-events-none absolute bottom-10 left-0 top-[22px] w-9 sm:top-[28px]"
+      className={`pointer-events-none absolute bottom-10 left-0 w-9 ${startsAtRow ? 'top-[18px]' : 'top-[22px] sm:top-[28px]'}`}
     >
       <span aria-hidden className="absolute inset-y-0 left-[17px] w-px bg-rule" />
       <motion.span
@@ -502,6 +503,83 @@ function YearSection({ year, entries }: { year: number; entries: FeedEntry[] }) 
   );
 }
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// Next upcoming event, picked on the client so a cached page never shows a past one.
+function useNextEvent(): { event: UpcomingEvent; when: string } | null {
+  const [next, setNext] = useState<{ event: UpcomingEvent; when: string } | null>(null);
+  useEffect(() => {
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const event = [...upcoming].sort((a, b) => a.date.localeCompare(b.date)).find((e) => e.date >= today);
+    if (!event) return;
+    const [y, m, d] = event.date.split('-').map(Number);
+    const days = Math.round((new Date(y, m - 1, d).getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) / 86400000);
+    const rel = days === 0 ? 'today' : days === 1 ? 'tomorrow' : days < 7 ? `in ${days} days` : '';
+    setNext({ event, when: `${MONTHS[m - 1]} ${d}${rel ? ` · ${rel}` : ''}` });
+  }, []);
+  return next;
+}
+
+// Rows that sit on the rail above the years: what's next, and proof of steady work.
+function LeadRows({ github }: { github: GithubStats | null }) {
+  const next = useNextEvent();
+  if (!next && !github) return null;
+  return (
+    <div className="pb-6">
+      {next && (
+        <Reveal>
+          <article className="relative grid gap-1.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
+            <span aria-hidden className="absolute left-0 top-0 z-10 grid h-9 w-9 place-items-center rounded-full border border-dashed border-faint/60 bg-paper text-faint">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="5" width="18" height="16" rx="2" />
+                <path d="M16 3v4M8 3v4M3 10h18" />
+              </svg>
+            </span>
+            <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-accent sm:pt-2">Next up</p>
+            <div className="min-w-0">
+              <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] text-ink/60 sm:text-[21px]">
+                {next.event.url ? (
+                  <a href={next.event.url} target="_blank" rel="noopener noreferrer" className="underline decoration-2 decoration-rule underline-offset-[5px] transition-colors hover:decoration-accent">
+                    {next.event.title}
+                  </a>
+                ) : (
+                  next.event.title
+                )}
+              </h3>
+              <p className="mt-1 text-sm text-faint">{next.when}</p>
+              {next.event.detail && (
+                <p className="mt-2 max-w-[72ch] text-[15px] leading-relaxed text-muted">{next.event.detail}</p>
+              )}
+            </div>
+          </article>
+        </Reveal>
+      )}
+      {github && (
+        <Reveal>
+          <article className="relative grid gap-1.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
+            <span aria-hidden className="absolute left-0 top-0 z-10 grid h-9 w-9 place-items-center rounded-full bg-ink text-paper">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57v-2.02c-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22v3.29c0 .32.21.7.82.58A12 12 0 0 0 12 .3Z" />
+              </svg>
+            </span>
+            <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-faint sm:pt-2">Lately</p>
+            <div className="min-w-0">
+              <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] sm:text-[21px]">Still building</h3>
+              <p className="mt-2 text-[15px] leading-relaxed text-muted">
+                <a href={github.profileUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline decoration-2 decoration-rule underline-offset-[4px] transition-colors hover:decoration-accent">
+                  {github.last30} GitHub contributions
+                </a>{' '}
+                in the last 30 days, {github.thisYear} this year.
+              </p>
+            </div>
+          </article>
+        </Reveal>
+      )}
+    </div>
+  );
+}
+
 // Editorial tab row on a hairline, in the same uppercase micro-label style as the links.
 function FilterBar({
   active,
@@ -554,7 +632,7 @@ function FilterBar({
   );
 }
 
-export default function Feed() {
+export default function Feed({ github = null }: { github?: GithubStats | null }) {
   const [filter, setFilter] = useState<FilterKey>('all');
   const [filtered, setFiltered] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
@@ -598,7 +676,8 @@ export default function Feed() {
             transition={{ duration: 0.45, ease: EASE }}
             className="relative"
           >
-            <Rail />
+            <Rail startsAtRow={filter === 'all'} />
+            {filter === 'all' && <LeadRows github={github} />}
             {groups.map(({ year, entries }) => (
               <YearSection key={year} year={year} entries={entries} />
             ))}

@@ -21,6 +21,7 @@ export const feed: FeedEntry[] = [
     month: 'August',
     title: 'Lead Photographer',
     org: 'GDG Sheridan',
+    orgUrl: 'https://www.gdgsheridan.com/',
     kind: 'role',
     current: true,
     description: 'Leading event photography for GDG Sheridan.',
@@ -30,6 +31,7 @@ export const feed: FeedEntry[] = [
     month: 'August',
     title: 'S:/HACKS Volunteer',
     org: 'Scotiabank',
+    orgUrl: 'https://www.scotiabank.com/careers/en/careers/s-hacks.html',
     kind: 'community',
     description: "Volunteered at Scotiabank's S:/HACKS hackathon.",
   },
@@ -38,6 +40,7 @@ export const feed: FeedEntry[] = [
     month: 'May',
     title: 'Software Engineer Intern',
     org: 'Scotiabank',
+    orgUrl: 'https://www.scotiabank.com/careers/en/careers.html',
     kind: 'role',
     current: true,
     description:
@@ -49,6 +52,7 @@ export const feed: FeedEntry[] = [
     month: 'May',
     title: 'Photographer',
     org: 'HuskyHack',
+    orgUrl: 'https://huskyhack.ca/',
     kind: 'community',
     description: 'Shot the event for HuskyHack.',
   },
@@ -57,10 +61,15 @@ export const feed: FeedEntry[] = [
     month: 'March',
     title: 'Outfitted',
     org: 'Hack Canada',
+    orgUrl: 'https://hackcanada.org/',
     kind: 'project',
     description:
       'AI wardrobe assistant — upload your clothes, build a digital closet, and generate outfit combinations from your own style. Hit every sponsor track we aimed for.',
     tags: ['Next.js', 'Cloudinary', 'Google Gemini', 'Auth0'],
+    links: [
+      { label: 'Live site', url: 'https://www.outfitted.ca/' },
+      { label: 'GitHub', url: 'https://github.com/S3yon/Outfitted' },
+    ],
   },
   {
     year: 2026,
@@ -94,7 +103,9 @@ export const feed: FeedEntry[] = [
   {
     year: 2025,
     month: 'November',
-    title: 'HemoStat — Most Impactful Award @ DevOps for GenAI',
+    title: 'HemoStat — Most Impactful Award',
+    org: 'DevOps for GenAI',
+    orgUrl: 'https://www.linkedin.com/company/canada-devops-community-of-practice/',
     kind: 'project',
     description:
       'Multi-agent system with 4 autonomous agents that monitor and remediate Docker container health issues, with a production monitoring stack. Built in 24 hours.',
@@ -106,6 +117,7 @@ export const feed: FeedEntry[] = [
     month: 'November',
     title: 'Mentor',
     org: 'Sheridan Datathon',
+    orgUrl: 'https://sheridandatathon.com/',
     kind: 'community',
     description:
       'Mentored teams through data science challenges — first time on the other side of a hackathon after competing in five.',
@@ -145,6 +157,7 @@ export const feed: FeedEntry[] = [
     month: 'July',
     title: '404cast',
     org: 'Hack404',
+    orgUrl: 'https://hack404.dev/',
     kind: 'project',
     description:
       'Guess-the-neighbourhood safety game built on real Toronto Police Service crime data and a predictive model, shipped as an offline-capable PWA.',
@@ -199,7 +212,9 @@ export const feed: FeedEntry[] = [
   {
     year: 2025,
     month: 'February',
-    title: 'ThyroTrack — 2nd Place @ AI in Healthcare Hackathon',
+    title: 'ThyroTrack — 2nd Place',
+    org: 'AI in Healthcare Hackathon',
+    orgUrl: 'https://www.linkedin.com/company/aihsyorku/',
     kind: 'project',
     description:
       'Health monitoring app for thyroid patients tracking 10+ metrics, with an XGBoost model hitting 91% accuracy identifying issues.',
@@ -237,3 +252,14 @@ export const feed: FeedEntry[] = [
 ];
 
 export const years = [...new Set(feed.map((e) => e.year))].sort((a, b) => b - a);
+
+// Upcoming public events. The feed shows only the next one that hasn't happened yet, so
+// past entries expire on their own. Dates are local (Toronto), YYYY-MM-DD.
+export interface UpcomingEvent {
+  date: string;
+  title: string;
+  detail?: string;
+  url?: string;
+}
+
+export const upcoming: UpcomingEvent[] = [];

@@ -1,8 +1,13 @@
 import Feed from '@/components/Feed';
 import Intro from '@/components/Intro';
 import Reveal from '@/components/Reveal';
+import { getGithubStats } from '@/lib/github';
 
-export default function Home() {
+// Refresh the GitHub counts every 6 hours.
+export const revalidate = 21600;
+
+export default async function Home() {
+  const github = await getGithubStats();
   return (
     <>
       <Intro />
@@ -10,7 +15,7 @@ export default function Home() {
       {/* content panel rides up over the intro as you scroll */}
       <div id="work" className="relative z-10 rounded-t-[28px] bg-paper shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.55)] sm:rounded-t-[40px]">
         <main className="mx-auto max-w-4xl px-5 py-20 sm:px-8 sm:py-28">
-          <Feed />
+          <Feed github={github} />
 
           <footer className="mt-24 border-t border-rule pt-12">
             <Reveal>
