@@ -275,16 +275,16 @@ function Rail({ startsAtRow = false }: { startsAtRow?: boolean }) {
   const lastMood = useRef<Mood | null>(null);
   const taps = useRef(0);
   const sinceMood = useRef(0);
-  const show = (next: BubbleBody) => {
+  const show = (next: BubbleBody, ms?: number) => {
     const id = ++said.current;
     setBubble({ id, ...next });
     window.clearTimeout(timers.current.bubble);
-    timers.current.bubble = window.setTimeout(() => setBubble(null), next.kind === 'mood' ? 1900 : 1400);
+    timers.current.bubble = window.setTimeout(() => setBubble(null), ms ?? (next.kind === 'mood' ? 1900 : 1400));
   };
-  const emote = (mood: Mood) => {
+  const emote = (mood: Mood, ms?: number) => {
     lastMood.current = mood;
     sinceMood.current = 0;
-    show({ kind: 'mood', mood });
+    show({ kind: 'mood', mood }, ms);
   };
   const speak = (text: string) => {
     sinceMood.current += 1;
@@ -359,24 +359,35 @@ function Rail({ startsAtRow = false }: { startsAtRow?: boolean }) {
     scheduleIdle();
     new Image().src = '/sprites/pikachu-moods.webp';
 
-    // Hello: the first time Pikachu scrolls into view, it hops and throws a peace sign.
+    // Hello: once per visit, when the reader first pauses with Pikachu fully in view (and
+    // room for the portrait below the sticky filter bar), it hops and throws a peace sign.
     let greeted = false;
-    const greet = () => {
+    let settle = 0;
+    const roomy = () => {
       const r = hopScope.current?.getBoundingClientRect();
-      if (greeted || !r || r.top > window.innerHeight * 0.8 || r.bottom < 0) return;
+      const bar = document.querySelector('nav[aria-label="Filter timeline"]')?.parentElement?.getBoundingClientRect();
+      if (!r) return false;
+      const portraitTop = r.top - 100; // the framed portrait is ~95px tall above its head
+      const floor = Math.max(bar ? bar.bottom : 0, 0) + 8;
+      return portraitTop >= floor && r.bottom <= window.innerHeight - 8;
+    };
+    const tryGreet = () => {
+      if (greeted || !roomy()) return;
       greeted = true;
       window.removeEventListener('scroll', greet);
-      window.setTimeout(() => {
-        hop(12);
-        emote('wink');
-      }, 250);
+      hop(12);
+      emote('wink', 2800);
+    };
+    const greet = () => {
+      window.clearTimeout(settle);
+      settle = window.setTimeout(tryGreet, 220);
     };
     window.addEventListener('scroll', greet, { passive: true });
-    greet();
     const t = timers.current;
     return () => {
       window.removeEventListener('timeline:reveal', onReveal);
       window.removeEventListener('scroll', greet);
+      window.clearTimeout(settle);
       window.clearTimeout(t.stop);
       window.clearTimeout(t.idle);
       window.clearTimeout(t.bubble);
