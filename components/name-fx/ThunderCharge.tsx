@@ -5,6 +5,7 @@ import Letters, { letterEls, prefersReducedMotion } from './Letters';
 
 // Pikachu's move: when the pointer comes near the name, a jagged bolt arcs from the
 // pointer to the nearest letter, which jolts and glows yellow. A tap fires one strike.
+// The whole name also flashes yellow after the intro and when the reader flies back to the top.
 export default function ThunderCharge({
   text,
   size,
@@ -144,12 +145,64 @@ export default function ThunderCharge({
       active = false;
     };
     // listen page-wide so the bolt reaches out as the cursor approaches from outside
+    // Full-name flash: a bolt drops onto the middle of the name and a yellow charge ripples
+    // across every letter, left to right. Fired once after the intro animation, and again
+    // whenever the reader flies back up to the top.
+    let lastFlash = -Infinity;
+    const flash = () => {
+      const now = performance.now();
+      if (now - lastFlash < 2500) return;
+      lastFlash = now;
+      const mid = letters[Math.floor(letters.length / 2)];
+      if (mid) {
+        const r = mid.getBoundingClientRect();
+        px = r.left + r.width / 2 + (Math.random() - 0.5) * 30;
+        py = r.top - 150;
+        until = now + 380;
+        start();
+      }
+      letters.forEach((l, i) => {
+        l.animate(
+          [
+            { color: '#C8C7C3', textShadow: '0 0 0 rgba(246,206,58,0)' },
+            { color: '#F6CE3A', textShadow: '0 0 26px rgba(246,206,58,0.85)', offset: 0.25 },
+            { color: '#F6CE3A', textShadow: '0 0 14px rgba(246,206,58,0.5)', offset: 0.55 },
+            { color: '#C8C7C3', textShadow: '0 0 0 rgba(246,206,58,0)' },
+          ],
+          { duration: 900, delay: 80 + i * 45, easing: 'ease-out' }
+        );
+      });
+    };
+
+    // after the intro fade-in (starts at 650ms, lasts 700ms)
+    const introFlash = window.setTimeout(flash, 1450);
+
+    // fast return to the top: upward speed over ~1.5 px/ms that lands near scrollY 0
+    let lastY = window.scrollY;
+    let lastT = performance.now();
+    let upSpeed = 0;
+    const onScroll = () => {
+      const now = performance.now();
+      const y = window.scrollY;
+      const v = (lastY - y) / Math.max(1, now - lastT);
+      upSpeed = v > 0 ? Math.max(v, upSpeed * 0.85) : 0;
+      lastY = y;
+      lastT = now;
+      if (y <= 8 && upSpeed > 1.5) {
+        upSpeed = 0;
+        flash();
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
     window.addEventListener('pointermove', move);
     el.addEventListener('pointerdown', down);
     document.addEventListener('pointerleave', leave);
     window.addEventListener('resize', size);
     return () => {
       window.removeEventListener('pointermove', move);
+      window.removeEventListener('scroll', onScroll);
+      window.clearTimeout(introFlash);
       el.removeEventListener('pointerdown', down);
       document.removeEventListener('pointerleave', leave);
       window.removeEventListener('resize', size);
