@@ -232,7 +232,7 @@ const MOOD_LABEL: Record<Mood, string> = {
   sad: 'sad',
   lookback: 'glancing back',
   cap: 'wearing a cap',
-  wink: 'winking',
+  wink: 'throwing a peace sign',
   grumpy: 'grumpy',
   love: 'delighted',
   sleepy: 'sleepy',
@@ -358,9 +358,25 @@ function Rail({ startsAtRow = false }: { startsAtRow?: boolean }) {
     window.addEventListener('timeline:reveal', onReveal);
     scheduleIdle();
     new Image().src = '/sprites/pikachu-moods.webp';
+
+    // Hello: the first time Pikachu scrolls into view, it hops and throws a peace sign.
+    let greeted = false;
+    const greet = () => {
+      const r = hopScope.current?.getBoundingClientRect();
+      if (greeted || !r || r.top > window.innerHeight * 0.8 || r.bottom < 0) return;
+      greeted = true;
+      window.removeEventListener('scroll', greet);
+      window.setTimeout(() => {
+        hop(12);
+        emote('wink');
+      }, 250);
+    };
+    window.addEventListener('scroll', greet, { passive: true });
+    greet();
     const t = timers.current;
     return () => {
       window.removeEventListener('timeline:reveal', onReveal);
+      window.removeEventListener('scroll', greet);
       window.clearTimeout(t.stop);
       window.clearTimeout(t.idle);
       window.clearTimeout(t.bubble);
