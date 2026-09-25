@@ -262,4 +262,11 @@ export interface UpcomingEvent {
   url?: string;
 }
 
-export const upcoming: UpcomingEvent[] = [];
+export const upcoming: UpcomingEvent[] = [
+  {
+    date: '2026-09-26',
+    title: 'Industry Panel @ GDG Sheridan',
+    detail: 'IBM, RBC and BMO on early careers and co-ops, with Hackville.',
+    url: 'https://www.gdgsheridan.com/',
+  },
+];
