@@ -18,9 +18,10 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
 
   // measure the space the crate can fan into (re-run once covers exist and the crate mounts)
   useEffect(() => {
-    const el = crate.current?.parentElement;
+    // the row holding the crate and the touch button
+    const el = crate.current?.parentElement?.parentElement;
     if (!el) return;
-    const ro = new ResizeObserver(() => setRoom(el.clientWidth));
+    const ro = new ResizeObserver(() => setRoom(el.clientWidth - (window.matchMedia('(hover: none)').matches ? 48 : 0)));
     ro.observe(el);
     return () => ro.disconnect();
   }, [hasCovers]);
@@ -47,12 +48,14 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
         </span>
         <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-faint sm:pt-2">On rotation</p>
         <div className="min-w-0">
+          <div className="flex items-center gap-3">
           <div
             ref={crate}
-            className="relative h-[88px] transition-[width] duration-500 ease-out"
+            className="relative h-[88px] shrink-0 transition-[width] duration-500 ease-out"
             style={{ width: open ? size + step * (covers.length - 1) : size + 50 }}
-            onPointerEnter={() => setOpen(true)}
-            onPointerLeave={() => {
+            onPointerEnter={(e) => e.pointerType === 'mouse' && setOpen(true)}
+            onPointerLeave={(e) => {
+              if (e.pointerType !== 'mouse') return;
               setOpen(false);
               setHover(null);
             }}
@@ -80,6 +83,33 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
                 transition={{ type: 'spring', stiffness: 300, damping: 26 }}
               />
             ))}
+          </div>
+          {/* touch screens can't hover: a small button fans the crate out and back */}
+          <button
+            type="button"
+            onClick={() => {
+              setOpen((o) => !o);
+              setHover(null);
+            }}
+            aria-expanded={open}
+            aria-label={open ? 'Stack the albums' : 'Spread out the albums'}
+            className="hidden h-9 w-9 shrink-0 place-items-center rounded-full border border-rule bg-paper text-muted shadow-[0_4px_12px_-8px_rgba(0,0,0,0.4)] transition-colors active:bg-ink/5 [@media(hover:none)]:grid"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-transform duration-300"
+              style={{ transform: open ? 'rotate(180deg)' : 'none' }}
+            >
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
           </div>
           <p className="mt-4 truncate font-heading text-[17px] font-extrabold leading-snug sm:text-[19px]">{shown.title}</p>
           <p className="truncate text-[14px] text-muted">
