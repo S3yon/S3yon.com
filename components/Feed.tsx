@@ -215,22 +215,28 @@ function Entry({ entry }: { entry: FeedEntry }) {
   );
 }
 
-// Mood portraits, in order, in public/sprites/pikachu-moods.png (32px each, Game Boy style).
-const MOODS = ['heart', 'hearts', 'grin', 'love', 'thunder', 'sleep', 'fishing', 'question', 'surprise'] as const;
+// Mood portraits, in order, in public/sprites/pikachu-moods.webp (216px each, shown at 72px).
+const MOODS = [
+  'question', 'angry', 'shocked', 'smug', 'hearts', 'sad',
+  'lookback', 'cap', 'wink', 'grumpy', 'love', 'sleepy',
+] as const;
 type Mood = (typeof MOODS)[number];
 const MOOD_LABEL: Record<Mood, string> = {
-  heart: 'happy',
-  hearts: 'overjoyed',
-  grin: 'pleased',
-  love: 'smitten',
-  thunder: 'charged up',
-  sleep: 'sleepy',
-  fishing: 'wearing a fishing hat',
   question: 'confused',
-  surprise: 'surprised',
+  angry: 'fired up',
+  shocked: 'shocked',
+  smug: 'smug',
+  hearts: 'overjoyed',
+  sad: 'sad',
+  lookback: 'glancing back',
+  cap: 'wearing a cap',
+  wink: 'winking',
+  grumpy: 'grumpy',
+  love: 'delighted',
+  sleepy: 'sleepy',
 };
 // What a tap shows. Awards always get 'hearts'.
-const TAP_MOODS: Mood[] = ['heart', 'grin', 'love', 'thunder', 'sleep', 'fishing', 'question', 'surprise'];
+const TAP_MOODS: Mood[] = MOODS.filter((m) => m !== 'hearts');
 
 // One continuous rail for the whole feed: a hairline, an accent fill that tracks scroll, and
 // Pikachu walking at the head of the fill (pinned to the LINE viewport line). It never fades:
@@ -324,6 +330,7 @@ function Rail() {
     };
     window.addEventListener('timeline:reveal', onReveal);
     scheduleIdle();
+    new Image().src = '/sprites/pikachu-moods.webp';
     const t = timers.current;
     return () => {
       window.removeEventListener('timeline:reveal', onReveal);
@@ -412,21 +419,21 @@ function Rail() {
                 transition={{ type: 'spring', stiffness: 460, damping: 22 }}
                 style={{ originX: '32px', originY: 1 }}
               >
-                <span className="block rounded-[7px] border-2 border-ink bg-[#F8F8F8] p-[3px] shadow-[0_8px_20px_-10px_rgba(0,0,0,0.45)]">
-                  <span className="block rounded-[3px] border border-ink/70 p-[2px]">
+                {/* frame echoes the art: navy double line on a yellow mat */}
+                <span className="block rounded-[8px] border-2 border-[#10061E] bg-[#F1C754] p-[4px] shadow-[0_10px_24px_-12px_rgba(0,0,0,0.5)]">
+                  <span className="block overflow-hidden rounded-[4px] border-[1.5px] border-[#10061E]">
                     <span
-                      className="block h-16 w-16"
+                      className="block h-[72px] w-[72px]"
                       style={{
-                        backgroundImage: 'url(/sprites/pikachu-moods.png)',
-                        backgroundSize: `${MOODS.length * 64}px 64px`,
-                        backgroundPositionX: `${-MOODS.indexOf(bubble.mood) * 64}px`,
-                        imageRendering: 'pixelated',
+                        backgroundImage: 'url(/sprites/pikachu-moods.webp)',
+                        backgroundSize: `${MOODS.length * 72}px 72px`,
+                        backgroundPositionX: `${-MOODS.indexOf(bubble.mood) * 72}px`,
                       }}
                     />
                   </span>
                 </span>
                 {/* tail */}
-                <span className="absolute -bottom-[7px] left-[32px] block h-3 w-3 -translate-x-1/2 rotate-45 border-b-2 border-r-2 border-ink bg-[#F8F8F8]" />
+                <span className="absolute -bottom-[7px] left-[32px] block h-3 w-3 -translate-x-1/2 rotate-45 border-b-2 border-r-2 border-[#10061E] bg-[#F1C754]" />
               </motion.span>
             )}
           </AnimatePresence>
