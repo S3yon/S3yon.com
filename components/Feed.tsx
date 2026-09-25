@@ -215,7 +215,22 @@ function Entry({ entry }: { entry: FeedEntry }) {
   );
 }
 
-const LINES = ['Pika!', 'Pika pika!', 'Chu~', 'Pikachu!'];
+// Mood portraits, in order, in public/sprites/pikachu-moods.png (32px each, Game Boy style).
+const MOODS = ['heart', 'hearts', 'grin', 'love', 'thunder', 'sleep', 'fishing', 'question', 'surprise'] as const;
+type Mood = (typeof MOODS)[number];
+const MOOD_LABEL: Record<Mood, string> = {
+  heart: 'happy',
+  hearts: 'overjoyed',
+  grin: 'pleased',
+  love: 'smitten',
+  thunder: 'charged up',
+  sleep: 'sleepy',
+  fishing: 'wearing a fishing hat',
+  question: 'confused',
+  surprise: 'surprised',
+};
+// What a tap shows. Awards always get 'hearts'.
+const TAP_MOODS: Mood[] = ['heart', 'grin', 'love', 'thunder', 'sleep', 'fishing', 'question', 'surprise'];
 
 // One continuous rail for the whole feed: a hairline, an accent fill that tracks scroll, and
 // Pikachu walking at the head of the fill (pinned to the LINE viewport line). It never fades:
@@ -223,9 +238,9 @@ const LINES = ['Pika!', 'Pika pika!', 'Chu~', 'Pikachu!'];
 //
 // Personality, all driven by what the reader does:
 //  - walks while scrolling, faster on a fast scroll; front view going down, back view going up
-//  - hops a little each time an entry pops in; celebrates awards with sparks and a "Pika!"
+//  - hops a little each time an entry pops in; celebrates awards with sparks and the hearts portrait
 //  - when the reader stops, breathes, then glances at the content and back, now and then
-//  - click it and it says something
+//  - tap or click it and a mood portrait pops up (never the same one twice in a row)
 function Rail() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [hopScope, animateHop] = useAnimate();
@@ -241,16 +256,18 @@ function Rail() {
   const [walking, setWalking] = useState(false);
   const [fast, setFast] = useState(false);
   const [facing, setFacing] = useState<PikaFacing>('down');
-  const [bubble, setBubble] = useState<{ id: number; text: string } | null>(null);
+  const [bubble, setBubble] = useState<{ id: number; mood: Mood } | null>(null);
   const [sparks, setSparks] = useState(0);
   const timers = useRef<{ stop?: number; idle?: number; bubble?: number }>({});
   const said = useRef(0);
 
-  const say = (text: string) => {
+  const lastMood = useRef<Mood | null>(null);
+  const emote = (mood: Mood) => {
     const id = ++said.current;
-    setBubble({ id, text });
+    lastMood.current = mood;
+    setBubble({ id, mood });
     window.clearTimeout(timers.current.bubble);
-    timers.current.bubble = window.setTimeout(() => setBubble(null), 1500);
+    timers.current.bubble = window.setTimeout(() => setBubble(null), 1800);
   };
 
   const hop = (height = 10) => {
@@ -300,7 +317,7 @@ function Rail() {
       if (award) {
         hop(16);
         setSparks((n) => n + 1);
-        say('Pika!');
+        emote('hearts');
       } else {
         hop(8);
       }
@@ -339,7 +356,8 @@ function Rail() {
             onClick={() => {
               hop(14);
               setFacing('down');
-              say(LINES[said.current % LINES.length]);
+              const options = TAP_MOODS.filter((m) => m !== lastMood.current);
+              emote(options[Math.floor(Math.random() * options.length)]);
             }}
             className="pointer-events-auto block cursor-pointer"
           >
@@ -380,20 +398,35 @@ function Rail() {
             )}
           </AnimatePresence>
 
-          {/* speech bubble */}
+          {/* mood portrait, framed like the Game Boy original, popping out above its head */}
           <AnimatePresence>
             {bubble && (
               <motion.span
                 key={bubble.id}
                 role="status"
-                className="pointer-events-none absolute bottom-[calc(100%-14px)] left-1/2 whitespace-nowrap rounded-full border border-rule bg-paper px-2.5 py-1 font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-ink shadow-[0_6px_18px_-10px_rgba(0,0,0,0.35)]"
-                initial={{ opacity: 0, scale: 0.7, y: 6, x: '-50%' }}
-                animate={{ opacity: 1, scale: 1, y: 0, x: '-50%' }}
-                exit={{ opacity: 0, scale: 0.9, x: '-50%' }}
-                transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-                style={{ originY: 1 }}
+                aria-label={`Pikachu is ${MOOD_LABEL[bubble.mood]}`}
+                className="pointer-events-none absolute bottom-[calc(100%-10px)] left-0 block"
+                initial={{ opacity: 0, scale: 0.3, y: 14 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: -4 }}
+                transition={{ type: 'spring', stiffness: 460, damping: 22 }}
+                style={{ originX: '32px', originY: 1 }}
               >
-                {bubble.text}
+                <span className="block rounded-[7px] border-2 border-ink bg-[#F8F8F8] p-[3px] shadow-[0_8px_20px_-10px_rgba(0,0,0,0.45)]">
+                  <span className="block rounded-[3px] border border-ink/70 p-[2px]">
+                    <span
+                      className="block h-16 w-16"
+                      style={{
+                        backgroundImage: 'url(/sprites/pikachu-moods.png)',
+                        backgroundSize: `${MOODS.length * 64}px 64px`,
+                        backgroundPositionX: `${-MOODS.indexOf(bubble.mood) * 64}px`,
+                        imageRendering: 'pixelated',
+                      }}
+                    />
+                  </span>
+                </span>
+                {/* tail */}
+                <span className="absolute -bottom-[7px] left-[32px] block h-3 w-3 -translate-x-1/2 rotate-45 border-b-2 border-r-2 border-ink bg-[#F8F8F8]" />
               </motion.span>
             )}
           </AnimatePresence>
