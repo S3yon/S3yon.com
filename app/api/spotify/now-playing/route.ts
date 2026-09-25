@@ -2,80 +2,54 @@ import { getNowPlaying, getRecentlyPlayed } from '@/lib/spotify';
 
 export const dynamic = 'force-dynamic';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const shape = (t: any) => ({
+  title: t.name as string,
+  artist: t.artists.map((a: any) => a.name).join(', ') as string,
+  album: t.album.name as string,
+  albumImageUrl: (t.album.images[1] ?? t.album.images[0])?.url as string,
+  songUrl: t.external_urls.spotify as string,
+});
+
+// Current track (or the last one played), with progress for a live bar, plus the last few
+// distinct tracks for a "recently played" view.
 export async function GET() {
   try {
-    const response = await getNowPlaying();
+    const [nowRes, recentRes] = await Promise.all([getNowPlaying(), getRecentlyPlayed()]);
 
-    // If nothing is currently playing, fetch the last played track
-    if (response.status === 204 || response.status > 400) {
-    const recentResponse = await getRecentlyPlayed();
+    const recentItems: any[] = recentRes.status === 200 ? (await recentRes.json()).items ?? [] : [];
+    const seen = new Set<string>();
+    const recent = recentItems
+      .filter((i) => {
+        const id = i.track?.id;
+        if (!id || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      })
+      .slice(0, 6)
+      .map((i) => ({ ...shape(i.track), playedAt: i.played_at as string }));
 
-    if (recentResponse.status === 200) {
-      const recentData = await recentResponse.json();
-      const lastTrack = recentData.items[0]?.track;
-
-      if (lastTrack) {
-        return Response.json({
-          album: lastTrack.album.name,
-          albumImageUrl: lastTrack.album.images[0].url,
-          artist: lastTrack.artists.map((_artist: any) => _artist.name).join(', '),
-          isPlaying: false,
-          songUrl: lastTrack.external_urls.spotify,
-          title: lastTrack.name,
-        });
-      }
+    const song = nowRes.status === 200 ? await nowRes.json() : null;
+    if (song?.item && song.item.type === 'track') {
+      return Response.json({
+        ...shape(song.item),
+        isPlaying: Boolean(song.is_playing),
+        progressMs: song.progress_ms ?? 0,
+        durationMs: song.item.duration_ms ?? 0,
+        fetchedAt: Date.now(),
+        recent,
+      });
     }
 
-    return Response.json({ isPlaying: false });
-  }
-
-  const song = await response.json();
-
-  if (song.item === null) {
-    // Try to get recently played track
-    const recentResponse = await getRecentlyPlayed();
-
-    if (recentResponse.status === 200) {
-      const recentData = await recentResponse.json();
-      const lastTrack = recentData.items[0]?.track;
-
-      if (lastTrack) {
-        return Response.json({
-          album: lastTrack.album.name,
-          albumImageUrl: lastTrack.album.images[0].url,
-          artist: lastTrack.artists.map((_artist: any) => _artist.name).join(', '),
-          isPlaying: false,
-          songUrl: lastTrack.external_urls.spotify,
-          title: lastTrack.name,
-        });
-      }
+    if (recent.length) {
+      const { playedAt, ...last } = recent[0];
+      return Response.json({ ...last, isPlaying: false, playedAt, recent });
     }
-
-    return Response.json({ isPlaying: false });
-  }
-
-  const isPlaying = song.is_playing;
-  const title = song.item.name;
-  const artist = song.item.artists.map((_artist: any) => _artist.name).join(', ');
-  const album = song.item.album.name;
-  const albumImageUrl = song.item.album.images[0].url;
-  const songUrl = song.item.external_urls.spotify;
-
-  return Response.json({
-    album,
-    albumImageUrl,
-    artist,
-    isPlaying,
-    songUrl,
-    title,
-  });
+    return Response.json({ isPlaying: false, recent: [] });
   } catch (error) {
     console.error('Spotify API error:', error);
     return Response.json(
-      {
-        isPlaying: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch Spotify data'
-      },
+      { isPlaying: false, recent: [], error: error instanceof Error ? error.message : 'Failed to fetch Spotify data' },
       { status: 500 }
     );
   }

@@ -140,6 +140,23 @@
     animation: live-breathe 2.4s ease-in-out infinite;
   }
 
+  /* Spotify lab: ticker scroll, Pikachu bob, floating notes. */
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  @keyframes vibe {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50% { transform: translateY(-3px) rotate(3deg); }
+  }
+
+  @keyframes note-float {
+    0% { transform: translate(0, 0) scale(0.7); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(18px, -40px) scale(1.1); opacity: 0; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-arc,
     .animate-intro-fade,
