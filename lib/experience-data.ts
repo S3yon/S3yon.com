@@ -265,8 +265,8 @@ export interface UpcomingEvent {
 export const upcoming: UpcomingEvent[] = [
   {
     date: '2026-09-26',
-    title: 'Industry Panel @ GDG Sheridan',
-    detail: 'IBM, RBC and BMO on early careers and co-ops, with Hackville.',
-    url: 'https://www.gdgsheridan.com/',
+    title: 'Get Into Gear Panel @ GDG Sheridan',
+    detail: 'Panel and networking on cross-collaboration beyond hackathons, then a Google Cloud Career Launchpad workshop.',
+    url: 'https://gdg.community.dev/events/details/google-gdg-on-campus-sheridan-college-trafalgar-road-campus-oakville-canada-presents-get-into-gear-a-future-beyond-hackathons-cross-collaboration-in-the-professional-world/',
   },
 ];
