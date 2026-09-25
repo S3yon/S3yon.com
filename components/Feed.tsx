@@ -4,13 +4,15 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import {
   AnimatePresence,
   motion,
+  useAnimate,
   useMotionValueEvent,
   useScroll,
   useSpring,
   useTransform,
+  useVelocity,
 } from 'motion/react';
 import Reveal from './Reveal';
-import Pikachu from './Pikachu';
+import Pikachu, { type PikaFacing } from './Pikachu';
 import { useInViewOnce } from '@/lib/use-in-view-once';
 import { feed, type FeedEntry, type EntryKind } from '@/lib/experience-data';
 
@@ -106,8 +108,10 @@ function Entry({ entry }: { entry: FeedEntry }) {
   const hidden = state === 'hidden';
 
   useEffect(() => {
-    if (state === 'shown') seen.add(key);
-  }, [state, key]);
+    if (state !== 'shown') return;
+    seen.add(key);
+    window.dispatchEvent(new CustomEvent('timeline:reveal', { detail: { award: isAward(entry) } }));
+  }, [state, key, entry]);
 
   // One trigger drives the marker and the text, so they always move together.
   const text = (delay: number) => ({
@@ -211,58 +215,205 @@ function Entry({ entry }: { entry: FeedEntry }) {
   );
 }
 
-// The rail for one year: a hairline, an accent fill that tracks scroll, and Pikachu running
-// at the head of the fill. The head sits on the LINE viewport line.
+const LINES = ['Pika!', 'Pika pika!', 'Chu~', 'Pikachu!'];
+
+// One continuous rail for the whole feed: a hairline, an accent fill that tracks scroll, and
+// Pikachu walking at the head of the fill (pinned to the LINE viewport line). It never fades:
+// before the first entry it waits at the top, after the last it waits at the bottom.
+//
+// Personality, all driven by what the reader does:
+//  - walks while scrolling, faster on a fast scroll; front view going down, back view going up
+//  - hops a little each time an entry pops in; celebrates awards with sparks and a "Pika!"
+//  - when the reader stops, breathes, then glances at the content and back, now and then
+//  - click it and it says something
 function Rail() {
   const trackRef = useRef<HTMLDivElement>(null);
+  const [hopScope, animateHop] = useAnimate();
+  const { scrollY } = useScroll();
   const { scrollYProgress } = useScroll({
     target: trackRef,
     offset: [`start ${LINE * 100}%`, `end ${LINE * 100}%`],
   });
   const progress = useSpring(scrollYProgress, { stiffness: 260, damping: 34, restDelta: 0.0005 });
   const height = useTransform(progress, (v) => `${(v * 100).toFixed(2)}%`);
-  const runnerOpacity = useTransform(progress, [0, 0.015, 0.985, 1], [0, 1, 1, 0]);
+  const velocity = useVelocity(scrollY);
 
-  const [running, setRunning] = useState(false);
-  const [facing, setFacing] = useState<'down' | 'up'>('down');
-  const last = useRef(0);
-  const stop = useRef<number | undefined>(undefined);
+  const [walking, setWalking] = useState(false);
+  const [fast, setFast] = useState(false);
+  const [facing, setFacing] = useState<PikaFacing>('down');
+  const [bubble, setBubble] = useState<{ id: number; text: string } | null>(null);
+  const [sparks, setSparks] = useState(0);
+  const timers = useRef<{ stop?: number; idle?: number; bubble?: number }>({});
+  const said = useRef(0);
 
-  useMotionValueEvent(scrollYProgress, 'change', (v) => {
-    if (v > 0 && v < 1) {
-      setFacing(v >= last.current ? 'down' : 'up');
-      setRunning(true);
-      window.clearTimeout(stop.current);
-      stop.current = window.setTimeout(() => setRunning(false), 160);
-    }
-    last.current = v;
+  const say = (text: string) => {
+    const id = ++said.current;
+    setBubble({ id, text });
+    window.clearTimeout(timers.current.bubble);
+    timers.current.bubble = window.setTimeout(() => setBubble(null), 1500);
+  };
+
+  const hop = (height = 10) => {
+    if (!hopScope.current) return;
+    animateHop(hopScope.current, { y: [0, -height, 0] }, { duration: 0.34, ease: 'easeOut' });
+  };
+
+  // Idle loop: after a pause, glance at the content, then back at the reader.
+  const scheduleIdle = () => {
+    window.clearTimeout(timers.current.idle);
+    const steps: [PikaFacing, number][] = [
+      ['right', 2600],
+      ['down', 1400],
+      ['left', 900],
+      ['down', 5200],
+    ];
+    let i = 0;
+    const next = () => {
+      const [dir, wait] = steps[i % steps.length];
+      timers.current.idle = window.setTimeout(() => {
+        setFacing(dir);
+        i += 1;
+        next();
+      }, wait);
+    };
+    next();
+  };
+
+  useMotionValueEvent(scrollY, 'change', () => {
+    const v = velocity.get();
+    if (Math.abs(v) < 5) return;
+    window.clearTimeout(timers.current.idle);
+    setFacing(v > 0 ? 'down' : 'up');
+    setFast(Math.abs(v) > 1400);
+    setWalking(true);
+    window.clearTimeout(timers.current.stop);
+    timers.current.stop = window.setTimeout(() => {
+      setWalking(false);
+      setFast(false);
+      scheduleIdle();
+    }, 180);
   });
 
-  useEffect(() => () => window.clearTimeout(stop.current), []);
+  useEffect(() => {
+    const onReveal = (e: Event) => {
+      const { award } = (e as CustomEvent<{ award: boolean }>).detail;
+      if (award) {
+        hop(16);
+        setSparks((n) => n + 1);
+        say('Pika!');
+      } else {
+        hop(8);
+      }
+    };
+    window.addEventListener('timeline:reveal', onReveal);
+    scheduleIdle();
+    const t = timers.current;
+    return () => {
+      window.removeEventListener('timeline:reveal', onReveal);
+      window.clearTimeout(t.stop);
+      window.clearTimeout(t.idle);
+      window.clearTimeout(t.bubble);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div ref={trackRef} aria-hidden className="pointer-events-none absolute bottom-10 left-0 top-[18px] w-9">
-      <span className="absolute inset-y-0 left-[17px] w-px bg-rule" />
+    <div
+      ref={trackRef}
+      className="pointer-events-none absolute bottom-10 left-0 top-[22px] w-9 sm:top-[28px]"
+    >
+      <span aria-hidden className="absolute inset-y-0 left-[17px] w-px bg-rule" />
       <motion.span
+        aria-hidden
         style={{ height }}
         className="absolute left-[16.5px] top-0 w-[2px] rounded-full bg-gradient-to-b from-accent/0 via-accent/60 to-accent"
       />
-      <motion.span
-        style={{ top: height, opacity: runnerOpacity }}
+      <motion.div
+        style={{ top: height }}
         className="absolute left-1/2 z-20 -translate-x-1/2 -translate-y-[62%]"
       >
-        <Pikachu running={running} facing={facing} />
-      </motion.span>
+        <div ref={hopScope} className="relative">
+          <button
+            type="button"
+            aria-label="Pikachu"
+            onClick={() => {
+              hop(14);
+              setFacing('down');
+              say(LINES[said.current % LINES.length]);
+            }}
+            className="pointer-events-auto block cursor-pointer"
+          >
+            <Pikachu walking={walking} fast={fast} facing={facing} />
+          </button>
+
+          {/* award sparks */}
+          <AnimatePresence>
+            {sparks > 0 && (
+              <motion.span
+                key={sparks}
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 0.9, delay: 0.3 }}
+                onAnimationComplete={() => setSparks(0)}
+              >
+                {[-60, -20, 20, 60].map((deg) => (
+                  <motion.svg
+                    key={deg}
+                    width="10"
+                    height="14"
+                    viewBox="0 0 10 14"
+                    className="absolute left-1/2 top-6"
+                    initial={{ x: -5, y: 0, rotate: deg, scale: 0.4 }}
+                    animate={{
+                      x: -5 + Math.round(Math.sin((deg * Math.PI) / 180) * 26),
+                      y: -Math.round(Math.cos((deg * Math.PI) / 180) * 22),
+                      scale: 1,
+                    }}
+                    transition={{ duration: 0.45, ease: EASE }}
+                  >
+                    <path d="M6 0 L1 8 L5 8 L3 14 L9 5 L5 5 Z" fill="#F6CE3A" stroke="#B4502A" strokeWidth="0.8" />
+                  </motion.svg>
+                ))}
+              </motion.span>
+            )}
+          </AnimatePresence>
+
+          {/* speech bubble */}
+          <AnimatePresence>
+            {bubble && (
+              <motion.span
+                key={bubble.id}
+                role="status"
+                className="pointer-events-none absolute left-[52px] top-2 whitespace-nowrap rounded-full border border-rule bg-paper px-2.5 py-1 font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-ink shadow-[0_6px_18px_-10px_rgba(0,0,0,0.35)]"
+                initial={{ opacity: 0, scale: 0.7, x: -6 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                style={{ originX: 0 }}
+              >
+                {bubble.text}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
     </div>
   );
 }
 
+// Year heading sits on the rail: a node on the line, the year aligned with the entry text.
 function YearSection({ year, entries }: { year: number; entries: FeedEntry[] }) {
   const { filtered } = useContext(FeedMode);
   return (
     <section className="pt-14 first:pt-0">
       <Reveal instantIfPast={filtered}>
-        <div className="mb-8 flex items-center gap-5">
+        <div className="relative mb-8 flex items-center gap-5 pl-12 sm:pl-16">
+          <span
+            aria-hidden
+            className="absolute left-[11px] top-1/2 z-10 h-[14px] w-[14px] -translate-y-1/2 rounded-full border-2 border-ink/25 bg-paper"
+          />
           <h2 className="font-heading text-[44px] font-extrabold leading-none tracking-[-0.03em] sm:text-[56px]">
             {year}
           </h2>
@@ -270,12 +421,9 @@ function YearSection({ year, entries }: { year: number; entries: FeedEntry[] }) 
         </div>
       </Reveal>
 
-      <div className="relative">
-        <Rail />
-        {entries.map((entry) => (
-          <Entry key={entryKey(entry)} entry={entry} />
-        ))}
-      </div>
+      {entries.map((entry) => (
+        <Entry key={entryKey(entry)} entry={entry} />
+      ))}
     </section>
   );
 }
@@ -374,7 +522,9 @@ export default function Feed() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
             transition={{ duration: 0.45, ease: EASE }}
+            className="relative"
           >
+            <Rail />
             {groups.map(({ year, entries }) => (
               <YearSection key={year} year={year} entries={entries} />
             ))}

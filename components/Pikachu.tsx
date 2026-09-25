@@ -1,22 +1,29 @@
-// Pikachu from a 4×4 sprite sheet of 64px frames (public/sprites/pikachu.png).
-// Top row walks toward the viewer (scrolling down); bottom row walks away (scrolling up).
-// Frames cycle only while `running`; at rest it holds the first frame.
+export type PikaFacing = 'down' | 'left' | 'right' | 'up';
+
+// Row of the 4×4 sprite sheet (64px frames) for each direction.
+const ROW: Record<PikaFacing, number> = { down: 0, left: 1, right: 2, up: 3 };
+
+// Pikachu from public/sprites/pikachu.png. Frames cycle only while `walking`; `fast`
+// doubles the cadence for quick scrolls. At rest it holds the first frame of its row.
 export default function Pikachu({
-  running,
+  walking,
+  fast = false,
   facing,
 }: {
-  running: boolean;
-  facing: 'down' | 'up';
+  walking: boolean;
+  fast?: boolean;
+  facing: PikaFacing;
 }) {
   return (
     <span
       aria-hidden
-      data-running={running}
+      data-walking={walking}
+      data-fast={fast}
       className="pika block h-16 w-16"
       style={{
         backgroundImage: 'url(/sprites/pikachu.png)',
         backgroundSize: '256px 256px',
-        backgroundPositionY: facing === 'up' ? '-192px' : '0px',
+        backgroundPositionY: `${-ROW[facing] * 64}px`,
         imageRendering: 'pixelated',
       }}
     />

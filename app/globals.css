@@ -94,8 +94,22 @@
     to { background-position-x: -256px; }
   }
 
-  .pika[data-running='true'] {
-    animation: pika-walk 0.5s steps(4) infinite;
+  .pika[data-walking='true'] {
+    animation: pika-walk 0.52s steps(4) infinite;
+  }
+
+  .pika[data-walking='true'][data-fast='true'] {
+    animation-duration: 0.26s;
+  }
+
+  /* Idle breathing while standing still. */
+  @keyframes pika-breathe {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-1.5px); }
+  }
+
+  .pika[data-walking='false'] {
+    animation: pika-breathe 1.6s ease-in-out infinite;
   }
 
   @media (prefers-reduced-motion: reduce) {
