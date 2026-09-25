@@ -5,7 +5,17 @@ import Letters, { letterEls, prefersReducedMotion } from './Letters';
 
 // Pikachu's move: when the pointer comes near the name, a jagged bolt arcs from the
 // pointer to the nearest letter, which jolts and glows yellow. A tap fires one strike.
-export default function ThunderCharge({ text }: { text: string }) {
+export default function ThunderCharge({
+  text,
+  size,
+  className = '',
+  style,
+}: {
+  text: string;
+  size?: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
   const wrap = useRef<HTMLDivElement>(null);
   const name = useRef<HTMLHeadingElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -26,7 +36,7 @@ export default function ThunderCharge({ text }: { text: string }) {
     let bolt: [number, number][] = [];
 
     const size = () => {
-      const r = el.getBoundingClientRect();
+      const r = cv.getBoundingClientRect();
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       cv.width = Math.round(r.width * dpr);
       cv.height = Math.round(r.height * dpr);
@@ -64,7 +74,7 @@ export default function ThunderCharge({ text }: { text: string }) {
     };
 
     const frame = (now: number) => {
-      const box = el.getBoundingClientRect();
+      const box = cv.getBoundingClientRect();
       ctx.clearRect(0, 0, box.width, box.height);
       if (!active && now > until) {
         setTarget(null);
@@ -149,9 +159,10 @@ export default function ThunderCharge({ text }: { text: string }) {
   }, []);
 
   return (
-    <div ref={wrap} className="relative touch-manipulation py-10">
-      <canvas ref={canvas} aria-hidden className="pointer-events-none absolute inset-0 z-10 h-full w-full" />
-      <Letters ref={name} text={text} className="[&>span]:transition-[color,text-shadow] [&>span]:duration-150" />
+    <div ref={wrap} className={`relative touch-manipulation ${className}`} style={style}>
+      {/* overhangs the name so a bolt can reach out to a cursor that is still approaching */}
+      <canvas ref={canvas} aria-hidden className="pointer-events-none absolute -inset-[140px] z-10 h-[calc(100%+280px)] w-[calc(100%+280px)]" />
+      <Letters ref={name} text={text} size={size} className="[&>span]:transition-[color,text-shadow] [&>span]:duration-150" />
     </div>
   );
 }

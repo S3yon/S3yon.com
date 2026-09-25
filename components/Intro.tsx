@@ -1,4 +1,5 @@
 import NowPlaying from './NowPlaying';
+import ThunderCharge from './name-fx/ThunderCharge';
 
 type Social = { name: string; url: string; icon: React.ReactNode };
 
@@ -69,12 +70,13 @@ export default function Intro() {
 
       <div className="relative flex h-full flex-col px-6 py-8 sm:px-12 sm:py-10">
         <div className="flex flex-1 flex-col justify-center">
-          <h1
-            className="animate-intro-fade font-display text-[clamp(60px,15.5vw,220px)] leading-[0.8] tracking-[0.005em] text-chalk"
+          {/* Thunder charge: a bolt arcs from the cursor to the nearest letter; tap to strike */}
+          <ThunderCharge
+            text="SEYON SRI"
+            size="text-[clamp(60px,15.5vw,220px)] leading-[0.8]"
+            className="animate-intro-fade self-start"
             style={{ animationDelay: '650ms' }}
-          >
-            SEYON SRI
-          </h1>
+          />
 
           {/* socials, right under the name */}
           <nav
