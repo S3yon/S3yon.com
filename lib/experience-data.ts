@@ -63,6 +63,26 @@ export const feed: FeedEntry[] = [
     tags: ['Next.js', 'Cloudinary', 'Google Gemini', 'Auth0'],
   },
   {
+    year: 2026,
+    month: 'February',
+    title: 'Job Search Week Volunteer',
+    org: 'Sheridan Works',
+    kind: 'community',
+    description:
+      'Helped run the employer panel and speed interviews for co-op students at HMC, and shot headshots for every attendee.',
+  },
+  {
+    year: 2026,
+    month: 'January',
+    title: 'AI Engineer',
+    org: 'Sheridan Centre for Applied AI',
+    orgUrl: 'https://www.sheridancollege.ca/research/centres/applied-ai',
+    kind: 'role',
+    description:
+      'Continued the pediatric pneumonia screening work under a new title, through April 2026.',
+    tags: ['PyTorch', 'MobileNet'],
+  },
+  {
     year: 2025,
     month: 'December',
     title: 'Organizer',
