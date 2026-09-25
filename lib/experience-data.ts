@@ -88,7 +88,7 @@ export const feed: FeedEntry[] = [
     org: 'Stan x HackAI Toronto',
     kind: 'project',
     description:
-      'Our first Swift project: a native iOS app backed by AWS Lambda and S3, built as a team in a weekend. Finished in the top 6.',
+      'My first Swift project: a native iOS app backed by AWS Lambda and S3, built with a team over the weekend. Finished in the top 6.',
     tags: ['Swift', 'AWS Lambda', 'Amazon S3'],
   },
   {
