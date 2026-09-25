@@ -88,34 +88,14 @@
     animation: scroll-cue 1.8s cubic-bezier(0.65, 0, 0.35, 1) 2.2s infinite both;
   }
 
-  /* Timeline runner: legs and bob cycle only while the reader is scrolling. */
-  @keyframes pika-leg {
-    0%, 100% { transform: translateX(-2.5px); }
-    50% { transform: translateX(2.5px); }
+  /* Timeline runner: steps through the 4 sprite frames only while the reader is scrolling. */
+  @keyframes pika-walk {
+    from { background-position-x: 0; }
+    to { background-position-x: -256px; }
   }
 
-  @keyframes pika-bob {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-1.5px); }
-  }
-
-  .pika .pika-leg-a,
-  .pika .pika-leg-b,
-  .pika .pika-body {
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-
-  .pika[data-running='true'] .pika-leg-a {
-    animation: pika-leg 0.28s ease-in-out infinite;
-  }
-
-  .pika[data-running='true'] .pika-leg-b {
-    animation: pika-leg 0.28s ease-in-out infinite reverse;
-  }
-
-  .pika[data-running='true'] .pika-body {
-    animation: pika-bob 0.14s ease-in-out infinite;
+  .pika[data-running='true'] {
+    animation: pika-walk 0.5s steps(4) infinite;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -125,7 +105,7 @@
     .animate-bar,
     .animate-rise,
     .animate-scroll-cue,
-    .pika * {
+    .pika {
       animation: none !important;
     }
   }

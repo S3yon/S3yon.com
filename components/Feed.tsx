@@ -249,7 +249,7 @@ function Rail() {
       />
       <motion.span
         style={{ top: height, opacity: runnerOpacity }}
-        className="absolute left-1/2 z-20 -translate-x-1/2 -translate-y-[85%]"
+        className="absolute left-1/2 z-20 -translate-x-1/2 -translate-y-[62%]"
       >
         <Pikachu running={running} facing={facing} />
       </motion.span>
