@@ -190,7 +190,7 @@ function Entry({ entry }: { entry: FeedEntry }) {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-1.5 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-accent"
+                className="group -my-2 inline-flex items-center gap-1.5 py-2 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-accent"
               >
                 <span className="border-b border-rule pb-0.5 transition-colors group-hover:border-accent">
                   {link.label}
@@ -386,12 +386,12 @@ function Rail() {
               <motion.span
                 key={bubble.id}
                 role="status"
-                className="pointer-events-none absolute left-[52px] top-2 whitespace-nowrap rounded-full border border-rule bg-paper px-2.5 py-1 font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-ink shadow-[0_6px_18px_-10px_rgba(0,0,0,0.35)]"
-                initial={{ opacity: 0, scale: 0.7, x: -6 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                className="pointer-events-none absolute bottom-[calc(100%-14px)] left-1/2 whitespace-nowrap rounded-full border border-rule bg-paper px-2.5 py-1 font-heading text-[11px] font-bold uppercase tracking-[0.14em] text-ink shadow-[0_6px_18px_-10px_rgba(0,0,0,0.35)]"
+                initial={{ opacity: 0, scale: 0.7, y: 6, x: '-50%' }}
+                animate={{ opacity: 1, scale: 1, y: 0, x: '-50%' }}
+                exit={{ opacity: 0, scale: 0.9, x: '-50%' }}
                 transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-                style={{ originX: 0 }}
+                style={{ originY: 1 }}
               >
                 {bubble.text}
               </motion.span>
@@ -443,7 +443,7 @@ function FilterBar({
       <div className="flex items-end justify-between gap-6 border-b border-rule">
         <nav
           aria-label="Filter timeline"
-          className="-mb-px flex gap-6 overflow-x-auto [scrollbar-width:none] sm:gap-8"
+          className="-mb-px flex gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
         >
           {FILTERS.map((f) => {
             const on = f.key === active;

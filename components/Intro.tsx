@@ -63,7 +63,7 @@ const notes = [
 
 export default function Intro() {
   return (
-    <section className="sticky top-0 z-0 h-screen overflow-hidden bg-shell">
+    <section className="sticky top-0 z-0 h-screen h-svh overflow-hidden bg-shell">
       {/* the panel that sweeps up with an arc top, then flattens */}
       <div className="animate-arc absolute inset-0 bg-charcoal" />
 
