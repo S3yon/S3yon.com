@@ -37,10 +37,10 @@ export default function NowPlaying() {
       href={track.songUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="animate-intro-fade group absolute bottom-7 left-6 z-10 flex max-w-[min(70vw,420px)] items-center gap-2.5 sm:bottom-9 sm:left-12"
+      className="animate-intro-fade group flex max-w-full items-center justify-center gap-2.5 sm:max-w-[420px] sm:justify-start"
       style={{ animationDelay: '1600ms' }}
     >
-      <span className="flex h-3 items-end gap-[2px]" aria-hidden>
+      <span className="flex h-3 shrink-0 items-end gap-[2px]" aria-hidden>
         {[0, 1, 2].map((i) => (
           <span
             key={i}

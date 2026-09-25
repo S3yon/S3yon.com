@@ -8,7 +8,7 @@ export default function Home() {
       <Intro />
 
       {/* content panel rides up over the intro as you scroll */}
-      <div className="relative z-10 rounded-t-[28px] bg-paper shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.55)] sm:rounded-t-[40px]">
+      <div id="work" className="relative z-10 rounded-t-[28px] bg-paper shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.55)] sm:rounded-t-[40px]">
         <main className="mx-auto max-w-4xl px-5 py-20 sm:px-8 sm:py-28">
           <Feed />
 

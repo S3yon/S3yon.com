@@ -39,7 +39,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${display.variable} ${heading.variable} ${sans.variable}`}
+      className={`${display.variable} ${heading.variable} ${sans.variable} scroll-smooth`}
     >
       <body className="font-sans antialiased">{children}</body>
     </html>
