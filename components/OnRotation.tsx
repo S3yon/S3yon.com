@@ -29,8 +29,8 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
 
   // measure the space the crate can fan into (re-run once covers exist and the crate mounts)
   useEffect(() => {
-    // the row holding the crate and the touch button
-    const el = crate.current?.parentElement?.parentElement;
+    // the crate's own column (next to the touch button, beside the player)
+    const el = crate.current?.parentElement;
     if (!el) return;
     const ro = new ResizeObserver(() => setRoom(el.clientWidth - (window.matchMedia('(hover: none)').matches ? 48 : 0)));
     ro.observe(el);
@@ -60,7 +60,10 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
         </span>
         <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-faint sm:pt-2">On rotation</p>
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-3">
+          {/* desktop: crate and player in fixed columns, so fanning the crate never moves the
+              player; phones: player below */}
+          <div className={`grid items-center gap-4 ${state.uri ? 'sm:grid-cols-[minmax(0,1fr)_300px]' : ''}`}>
+          <div className="flex min-w-0 items-center gap-3">
           <div
             ref={crate}
             className="relative h-[88px] shrink-0 transition-[width] duration-500 ease-out"
@@ -128,10 +131,11 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
               <path d="m9 6 6 6-6 6" />
             </svg>
           </button>
-          {/* the player, to the right of the crate */}
+          </div>
+          {/* the player, in its own column */}
           <div
-            className={`relative shrink-0 overflow-hidden rounded-xl shadow-[0_12px_30px_-14px_rgba(0,0,0,0.5)] transition-[opacity,transform] duration-500 ${state.uri ? 'scale-100 opacity-100' : 'pointer-events-none scale-90 opacity-0'}`}
-            style={{ width: 'min(300px, 100%)', height: 152, display: state.uri ? undefined : 'none' }}
+            className={`relative w-full max-w-[300px] overflow-hidden rounded-xl shadow-[0_12px_30px_-14px_rgba(0,0,0,0.5)] ${state.uri ? 'animate-[rise_500ms_cubic-bezier(0.16,1,0.3,1)_both]' : ''}`}
+            style={{ height: 152, display: state.uri ? undefined : 'none' }}
           >
             <div ref={host} className="h-full w-full" />
           </div>
