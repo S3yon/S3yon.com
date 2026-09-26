@@ -124,7 +124,8 @@ function Entry({ entry }: { entry: FeedEntry }) {
     transition: hidden ? { duration: 0 } : { duration: 0.55, ease: EASE, delay },
   });
 
-  const tone = entry.current ? 'border-accent/50 text-accent' : 'border-rule text-muted';
+  const tone = entry.current ? 'border-accent/60 text-accent' : 'border-rule text-muted';
+  const award = isAward(entry);
 
   return (
     <article className="relative grid gap-2.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
@@ -138,7 +139,7 @@ function Entry({ entry }: { entry: FeedEntry }) {
           />
         )}
         <motion.span
-          className={`relative grid h-9 w-9 place-items-center rounded-full border bg-paper ${tone}`}
+          className={`relative grid h-9 w-9 place-items-center rounded-full border ${entry.logo ? 'bg-white' : 'bg-paper'} ${tone}`}
           initial={false}
           animate={hidden ? { scale: 0.5, opacity: 0 } : { scale: 1, opacity: 1 }}
           transition={
@@ -147,7 +148,27 @@ function Entry({ entry }: { entry: FeedEntry }) {
               : { type: 'spring', stiffness: 260, damping: 22, mass: 0.9 }
           }
         >
-          <KindIcon kind={entry.kind} award={isAward(entry)} />
+          {entry.logo ? (
+            // org logo; square logos fill the circle, others sit inside it
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={entry.logo}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className={entry.logoFill ? 'h-full w-full rounded-full object-cover' : 'h-[22px] w-[22px] object-contain'}
+            />
+          ) : (
+            <KindIcon kind={entry.kind} award={award} />
+          )}
+          {entry.logo && award && (
+            <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full bg-accent text-paper">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="6" />
+                <path d="M8.2 13.5 7 22l5-3 5 3-1.2-8.5" />
+              </svg>
+            </span>
+          )}
         </motion.span>
       </span>
 

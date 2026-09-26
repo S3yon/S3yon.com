@@ -11,6 +11,10 @@ export interface FeedEntry {
   description: string;
   tags?: string[];
   links?: { label: string; url: string }[];
+  // Org or event logo for the rail marker (from /public/logos). `logoFill` makes a square
+  // logo fill the whole circle instead of sitting inside it.
+  logo?: string;
+  logoFill?: boolean;
 }
 
 // One chronological feed, newest first. Roles, projects, community and school
@@ -21,6 +25,7 @@ export const feed: FeedEntry[] = [
     month: 'September',
     title: 'Photographer',
     org: 'Hack the North',
+    logo: '/logos/hackthenorth.png',
     orgUrl: 'https://www.linkedin.com/company/hack-the-north/',
     kind: 'community',
     description:
@@ -31,6 +36,7 @@ export const feed: FeedEntry[] = [
     month: 'August',
     title: 'Lead Photographer',
     org: 'GDG Sheridan',
+    logo: '/logos/gdgsheridan.png',
     orgUrl: 'https://www.gdgsheridan.com/',
     kind: 'role',
     current: true,
@@ -41,6 +47,7 @@ export const feed: FeedEntry[] = [
     month: 'August',
     title: 'S:/HACKS Volunteer',
     org: 'Scotiabank',
+    logo: '/logos/scotiabank.png',
     orgUrl: 'https://www.scotiabank.com/careers/en/careers/s-hacks.html',
     kind: 'community',
     description: "Volunteered at Scotiabank's S:/HACKS hackathon.",
@@ -50,6 +57,7 @@ export const feed: FeedEntry[] = [
     month: 'May',
     title: 'Software Engineer Intern',
     org: 'Scotiabank',
+    logo: '/logos/scotiabank.png',
     orgUrl: 'https://www.scotiabank.com/careers/en/careers.html',
     kind: 'role',
     current: true,
@@ -62,6 +70,8 @@ export const feed: FeedEntry[] = [
     month: 'May',
     title: 'Photographer',
     org: 'HuskyHack',
+    logo: '/logos/huskyhack.png',
+    logoFill: true,
     orgUrl: 'https://huskyhack.ca/',
     kind: 'community',
     description: 'Shot the event for HuskyHack.',
@@ -71,6 +81,7 @@ export const feed: FeedEntry[] = [
     month: 'March',
     title: 'Outfitted',
     org: 'Hack Canada',
+    logo: '/logos/hackcanada.svg',
     orgUrl: 'https://hackcanada.org/',
     kind: 'project',
     description:
@@ -97,6 +108,7 @@ export const feed: FeedEntry[] = [
     month: 'February',
     title: 'Job Search Week Volunteer',
     org: 'Sheridan Works',
+    logo: '/logos/sheridan.png',
     kind: 'community',
     description:
       'Helped run the employer panel and speed interviews for co-op students at HMC, and shot headshots for every attendee.',
@@ -106,6 +118,7 @@ export const feed: FeedEntry[] = [
     month: 'January',
     title: 'AI Engineer',
     org: 'Sheridan Centre for Applied AI',
+    logo: '/logos/sheridan.png',
     orgUrl: 'https://www.sheridancollege.ca/research/centres/applied-ai',
     kind: 'role',
     description:
@@ -117,6 +130,7 @@ export const feed: FeedEntry[] = [
     month: 'December',
     title: 'Organizer',
     org: 'BearHacks',
+    logo: '/logos/bearhacks.svg',
     orgUrl: 'https://www.bearhacks.com/',
     kind: 'community',
     description: 'Second term organizing BearHacks, through May 2026.',
@@ -138,6 +152,7 @@ export const feed: FeedEntry[] = [
     month: 'November',
     title: 'Mentor',
     org: 'Sheridan Datathon',
+    logo: '/logos/datathon.png',
     orgUrl: 'https://sheridandatathon.com/',
     kind: 'community',
     description:
@@ -148,6 +163,7 @@ export const feed: FeedEntry[] = [
     month: 'September',
     title: 'Machine Learning Developer',
     org: 'Sheridan Centre for Applied AI',
+    logo: '/logos/sheridan.png',
     orgUrl: 'https://www.sheridancollege.ca/research/centres/applied-ai',
     kind: 'role',
     description:
@@ -159,6 +175,7 @@ export const feed: FeedEntry[] = [
     month: 'September',
     title: 'Volunteer Staff',
     org: 'Hack the North',
+    logo: '/logos/hackthenorth.png',
     orgUrl: 'https://www.linkedin.com/company/hack-the-north/',
     kind: 'community',
     description: "Supported Canada's largest hackathon — 1,000+ participants at Waterloo.",
@@ -168,6 +185,7 @@ export const feed: FeedEntry[] = [
     month: 'August',
     title: 'Orientation Volunteer',
     org: 'Sheridan College',
+    logo: '/logos/sheridan.png',
     orgUrl: 'https://www.sheridancollege.ca',
     kind: 'community',
     description:
@@ -178,6 +196,8 @@ export const feed: FeedEntry[] = [
     month: 'July',
     title: '404cast',
     org: 'Hack404',
+    logo: '/logos/hack404.png',
+    logoFill: true,
     orgUrl: 'https://hack404.dev/',
     kind: 'project',
     description:
@@ -215,6 +235,8 @@ export const feed: FeedEntry[] = [
     month: 'June',
     title: 'Student Volunteer',
     org: 'Sheridan Student Union',
+    logo: '/logos/ssu.png',
+    logoFill: true,
     orgUrl: 'https://www.thessu.ca/',
     kind: 'community',
     description:
@@ -225,6 +247,7 @@ export const feed: FeedEntry[] = [
     month: 'March',
     title: 'Organizer',
     org: 'BearHacks',
+    logo: '/logos/bearhacks.svg',
     orgUrl: 'https://www.bearhacks.com/',
     kind: 'community',
     description:
@@ -246,6 +269,7 @@ export const feed: FeedEntry[] = [
     month: 'May',
     title: 'Software Development & Network Engineering',
     org: 'Sheridan College',
+    logo: '/logos/sheridan.png',
     orgUrl:
       'https://www.sheridancollege.ca/programs/computer-systems-technology-software-development-and-network-engineering',
     kind: 'education',
@@ -257,6 +281,8 @@ export const feed: FeedEntry[] = [
     month: 'February',
     title: 'Rental Consultant',
     org: 'Vistek',
+    logo: '/logos/vistek.png',
+    logoFill: true,
     kind: 'role',
     description:
       'Handled customer requests, billing and inventory for high-volume camera rentals, and resolved database issues to keep operations running.',
@@ -266,6 +292,7 @@ export const feed: FeedEntry[] = [
     month: 'October',
     title: 'Technical Service Representative',
     org: 'Transcom',
+    logo: '/logos/transcom.png',
     kind: 'role',
     description:
       'Supported 500+ users with remote diagnostics and structured troubleshooting, plus system hardening and security updates.',
