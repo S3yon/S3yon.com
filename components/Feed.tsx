@@ -775,6 +775,13 @@ function FilterBar({
 
 export default function Feed({ github = null }: { github?: GithubStats | null }) {
   const { data: spotify } = useSpotify();
+  // a song a visitor started from the On rotation crate
+  const [siteMusic, setSiteMusic] = useState<string | null>(null);
+  useEffect(() => {
+    const on = (e: Event) => setSiteMusic((e as CustomEvent<string | null>).detail);
+    window.addEventListener('site-music', on);
+    return () => window.removeEventListener('site-music', on);
+  }, []);
   const [filter, setFilter] = useState<FilterKey>('all');
   const [filtered, setFiltered] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
@@ -818,7 +825,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
             transition={{ duration: 0.45, ease: EASE }}
             className="relative"
           >
-            <Rail startsAtRow={filter === 'all'} music={spotify?.isPlaying ? spotify.title ?? null : null} />
+            <Rail startsAtRow={filter === 'all'} music={siteMusic ?? (spotify?.isPlaying ? spotify.title ?? null : null)} />
             {filter === 'all' && <LeadRows github={github} spotify={spotify} />}
             {groups.map(({ year, entries }) => (
               <YearSection key={year} year={year} entries={entries} />

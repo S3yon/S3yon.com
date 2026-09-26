@@ -4,10 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import Reveal from './Reveal';
 import { timeAgo, type SpotifyState } from '@/lib/use-spotify';
+import { trackUri, useSpotifyEmbed } from '@/lib/use-spotify-embed';
 
-// "On rotation": the last six tracks as a crate of records on the rail. Hover (or tap) to
-// fan them out and read each one; the marker is a small record that spins while music plays.
+// "On rotation": the last six tracks as a crate of records on the rail. Hover (or use the
+// touch button) to fan them out; click a cover and a compact Spotify player loads beside the
+// crate and plays it. Logged-out visitors hear 30s previews, Premium listeners the full song.
+// The marker is a small record that spins while music plays, here or on Seyon's Spotify.
 export default function OnRotation({ spotify }: { spotify: SpotifyState | null }) {
+  const { host, state, play } = useSpotifyEmbed({ height: 152 });
   const [hover, setHover] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const crate = useRef<HTMLDivElement>(null);
@@ -15,6 +19,13 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
 
   const covers = spotify?.recent ?? [];
   const hasCovers = covers.length > 0;
+
+  // tell the rail (Pikachu) when a visitor is playing something here
+  const nowTitle = covers.find((t) => trackUri(t.songUrl) === state.uri)?.title ?? null;
+  useEffect(() => {
+    const detail = state.uri && !state.paused ? nowTitle : null;
+    window.dispatchEvent(new CustomEvent('site-music', { detail }));
+  }, [state.uri, state.paused, nowTitle]);
 
   // measure the space the crate can fan into (re-run once covers exist and the crate mounts)
   useEffect(() => {
@@ -27,7 +38,8 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
   }, [hasCovers]);
 
   if (!covers.length) return null;
-  const playing = spotify?.isPlaying;
+  const sitePlaying = Boolean(state.uri && !state.paused);
+  const playing = spotify?.isPlaying || sitePlaying;
   const size = 88;
   // fanned spacing shrinks to fit narrow screens
   const step = Math.max(12, Math.min(76, (room - size) / Math.max(1, covers.length - 1)));
@@ -48,7 +60,7 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
         </span>
         <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-faint sm:pt-2">On rotation</p>
         <div className="min-w-0">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
           <div
             ref={crate}
             className="relative h-[88px] shrink-0 transition-[width] duration-500 ease-out"
@@ -61,12 +73,11 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
             }}
           >
             {covers.map((t, i) => (
-              <motion.a
+              <motion.button
+                type="button"
                 key={t.songUrl + i}
-                href={t.songUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${t.title} by ${t.artist}`}
+                onClick={() => play(trackUri(t.songUrl)!)}
+                aria-label={`Play ${t.title} by ${t.artist}`}
                 onPointerEnter={() => setHover(i)}
                 onFocus={() => {
                   setOpen(true);
@@ -81,7 +92,14 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
                   rotate: open ? 0 : (i - 2) * 3,
                 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-              />
+              >
+                {state.uri === trackUri(t.songUrl) && (
+                  <span className="absolute inset-0 rounded-md ring-2 ring-accent ring-offset-2 ring-offset-paper" />
+                )}
+                <span className="absolute inset-0 grid place-items-center rounded-md bg-black/35 opacity-0 transition-opacity hover:opacity-100">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z" /></svg>
+                </span>
+              </motion.button>
             ))}
           </div>
           {/* touch screens can't hover: a small button fans the crate out and back */}
@@ -110,6 +128,13 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
               <path d="m9 6 6 6-6 6" />
             </svg>
           </button>
+          {/* the player, to the right of the crate */}
+          <div
+            className={`relative shrink-0 overflow-hidden rounded-xl shadow-[0_12px_30px_-14px_rgba(0,0,0,0.5)] transition-[opacity,transform] duration-500 ${state.uri ? 'scale-100 opacity-100' : 'pointer-events-none scale-90 opacity-0'}`}
+            style={{ width: 'min(300px, 100%)', height: 152, display: state.uri ? undefined : 'none' }}
+          >
+            <div ref={host} className="h-full w-full" />
+          </div>
           </div>
           <p className="mt-4 truncate font-heading text-[17px] font-extrabold leading-snug sm:text-[19px]">{shown.title}</p>
           <p className="truncate text-[14px] text-muted">
