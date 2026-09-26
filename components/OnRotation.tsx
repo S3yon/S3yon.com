@@ -53,7 +53,7 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
 
   return (
     <Reveal>
-      <article className="relative grid gap-1.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
+      <article className="relative grid gap-3.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
         {/* marker: a tiny record with the current cover as its label */}
         <span aria-hidden className="absolute left-0 top-0 z-10 h-9 w-9">
           <span
@@ -86,7 +86,7 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
                 key={t.songUrl + i}
                 onClick={() => play(trackUri(t.songUrl)!)}
                 aria-label={`Play ${t.title} by ${t.artist}`}
-                onPointerEnter={() => setHover(i)}
+                onPointerEnter={(e) => e.pointerType === 'mouse' && setHover(i)}
                 onFocus={() => {
                   setOpen(true);
                   setHover(i);
