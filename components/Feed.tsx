@@ -736,7 +736,7 @@ function FilterBar({
       <div className="flex items-end justify-between gap-6 border-b border-rule">
         <nav
           aria-label="Filter timeline"
-          className="-mb-px flex gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
+          className="-mb-px mr-12 flex gap-6 overflow-x-auto pr-8 lg:mr-0 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
         >
           {FILTERS.map((f) => {
             const on = f.key === active;
