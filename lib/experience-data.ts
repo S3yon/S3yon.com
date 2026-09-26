@@ -84,12 +84,13 @@ export const feed: FeedEntry[] = [
   {
     year: 2026,
     month: 'February',
-    title: 'Native iOS app — Top 6',
+    title: 'StanCut — Top 6',
     org: 'Stan x HackAI Toronto',
     kind: 'project',
     description:
       'My first Swift project: a native iOS app backed by AWS Lambda and S3, built with a team over the weekend. Finished in the top 6.',
     tags: ['Swift', 'AWS Lambda', 'Amazon S3'],
+    links: [{ label: 'GitHub', url: 'https://github.com/S3yon/StanCut' }],
   },
   {
     year: 2026,
