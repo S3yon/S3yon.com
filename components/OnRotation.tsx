@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import Reveal from './Reveal';
+import PlayerLoader, { type LoaderKind } from './PlayerLoader';
 import { timeAgo, type SpotifyState } from '@/lib/use-spotify';
 import { trackUri, useSpotifyEmbed } from '@/lib/use-spotify-embed';
 
@@ -10,7 +11,15 @@ import { trackUri, useSpotifyEmbed } from '@/lib/use-spotify-embed';
 // touch button) to fan them out; click a cover and a compact Spotify player loads beside the
 // crate and plays it. Logged-out visitors hear 30s previews, Premium listeners the full song.
 // The marker is a small record that spins while music plays, here or on Seyon's Spotify.
-export default function OnRotation({ spotify }: { spotify: SpotifyState | null }) {
+export default function OnRotation({
+  spotify,
+  loader = 'skeleton',
+  minLoadMs = 0,
+}: {
+  spotify: SpotifyState | null;
+  loader?: LoaderKind;
+  minLoadMs?: number;
+}) {
   const { host, state, play } = useSpotifyEmbed({ height: 152 });
   const [hover, setHover] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
@@ -21,7 +30,18 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
   const hasCovers = covers.length > 0;
 
   // tell the rail (Pikachu) when a visitor is playing something here
-  const nowTitle = covers.find((t) => trackUri(t.songUrl) === state.uri)?.title ?? null;
+  const nowTrack = covers.find((t) => trackUri(t.songUrl) === state.uri);
+  const nowTitle = nowTrack?.title ?? null;
+
+  // hold the loader for at least minLoadMs (lab only), then crossfade to the player
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (!state.uri || !minLoadMs) return;
+    setHeld(true);
+    const t = window.setTimeout(() => setHeld(false), minLoadMs);
+    return () => window.clearTimeout(t);
+  }, [state.uri, minLoadMs]);
+  const loading = Boolean(state.uri) && (state.loading || held);
   useEffect(() => {
     const detail = state.uri && !state.paused ? nowTitle : null;
     window.dispatchEvent(new CustomEvent('site-music', { detail }));
@@ -137,7 +157,13 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
             className={`relative w-full max-w-[300px] overflow-hidden rounded-xl shadow-[0_12px_30px_-14px_rgba(0,0,0,0.5)] ${state.uri ? 'animate-[rise_500ms_cubic-bezier(0.16,1,0.3,1)_both]' : ''}`}
             style={{ height: 152, display: state.uri ? undefined : 'none' }}
           >
-            <div ref={host} className="h-full w-full" />
+            <div ref={host} className={`h-full w-full transition-opacity duration-500 ${loading ? 'opacity-0' : 'opacity-100'}`} />
+            <div
+              aria-hidden={!loading}
+              className={`absolute inset-0 transition-opacity duration-500 ${loading ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+            >
+              <PlayerLoader kind={loader} track={nowTrack} />
+            </div>
           </div>
           </div>
           <p className="mt-4 truncate font-heading text-[17px] font-extrabold leading-snug sm:text-[19px]">{shown.title}</p>

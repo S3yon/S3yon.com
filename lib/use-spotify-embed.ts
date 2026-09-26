@@ -48,9 +48,13 @@ export function useSpotifyEmbed({ height = 80, onEnded }: { height?: number; onE
   ended.current = onEnded;
   const [state, setState] = useState<EmbedState>({ uri: null, loading: false, paused: true, position: 0, duration: 0 });
 
+  const failsafe = useRef<number | undefined>(undefined);
   const play = useCallback(
     async (uri: string) => {
       setState((s) => ({ ...s, uri, loading: true }));
+      // never leave a loader up if the embed is slow to report back
+      window.clearTimeout(failsafe.current);
+      failsafe.current = window.setTimeout(() => setState((s) => ({ ...s, loading: false })), 5000);
       const api = await loadIframeApi();
       if (!ctrl.current) {
         if (!host.current) return;
@@ -64,7 +68,8 @@ export function useSpotifyEmbed({ height = 80, onEnded }: { height?: number; onE
           });
           c.addListener('playback_update', (e: any) => {
             const { isPaused, position, duration } = e.data;
-            setState((s) => ({ ...s, paused: isPaused, position, duration }));
+            // a playback update means the (new) track is loaded, including after loadUri
+            setState((s) => ({ ...s, paused: isPaused, position, duration, loading: s.loading && duration === 0 }));
             if (!isPaused && duration > 0 && position >= duration - 400) ended.current?.();
           });
         });
