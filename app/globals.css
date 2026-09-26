@@ -140,22 +140,6 @@
     animation: live-breathe 2.4s ease-in-out infinite;
   }
 
-  /* Spotify player loaders. */
-  @keyframes shimmer {
-    from { transform: translateX(0); }
-    to { transform: translateX(300%); }
-  }
-
-  @keyframes slide-spin {
-    from { transform: translateX(46px) rotate(0deg); }
-    to { transform: translateX(46px) rotate(360deg); }
-  }
-
-  @keyframes pika-dot {
-    0%, 100% { transform: translateY(0); opacity: 0.4; }
-    50% { transform: translateY(-4px); opacity: 1; }
-  }
-
   /* Pikachu listening along: bob and floating notes. */
   @keyframes vibe {
     0%, 100% { transform: translateY(0) rotate(-3deg); }
