@@ -732,7 +732,7 @@ function FilterBar({
   onChange: (key: FilterKey) => void;
 }) {
   return (
-    <div className="sticky top-0 z-30 -mx-5 mb-14 bg-paper/90 px-5 backdrop-blur-md sm:-mx-8 sm:px-8">
+    <div className="sticky top-0 z-30 -mx-5 mb-14 bg-paper/90 px-5 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:-mx-8 sm:px-8">
       <div className="flex items-end justify-between gap-6 border-b border-rule">
         <nav
           aria-label="Filter timeline"

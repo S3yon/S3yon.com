@@ -68,7 +68,7 @@ export default function Intro() {
       {/* the panel that sweeps up with an arc top, then flattens */}
       <div className="animate-arc absolute inset-0 bg-charcoal" />
 
-      <div className="relative flex h-full flex-col px-6 py-8 sm:px-12 sm:py-10">
+      <div className="relative flex h-full flex-col px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-12 sm:py-10">
         <div className="flex flex-1 flex-col justify-center">
           {/* Thunder charge: a bolt arcs from the cursor to the nearest letter; tap to strike */}
           <ThunderCharge

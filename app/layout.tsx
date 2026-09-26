@@ -25,12 +25,18 @@ export const metadata: Metadata = {
   title: "Seyon Sri",
   description:
     "Seyon Sri — Software Engineer Intern at Scotiabank. Data pipelines, diagnostic AI, and full-stack products shipped from hackathon to deploy.",
+  applicationName: "Seyon Sri",
+  // iOS home-screen app: full screen, content runs under a translucent status bar
+  appleWebApp: { capable: true, title: "Seyon", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#212225",
 };
 
 export default function RootLayout({
@@ -46,6 +52,8 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        {/* older iOS reads this instead of the manifest's display mode */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
       <body className="font-sans antialiased">
         {children}
