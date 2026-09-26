@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import "./globals.css";
+import { themeBootScript } from "@/lib/theme-boot";
 
 const display = Anton({
   subsets: ["latin"],
@@ -40,7 +41,11 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${display.variable} ${heading.variable} ${sans.variable} scroll-smooth`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

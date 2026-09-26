@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -14,12 +15,13 @@ const config: Config = {
         charcoal: '#212225',
         chalk: '#C8C7C3',
         // content world
-        paper: '#F4F3F0',
-        ink: '#18181A',
-        muted: '#61615F',
-        faint: '#93938F',
-        rule: '#DEDCD7',
-        accent: '#B4502A',
+        // content world: themed via CSS variables (light + dark in globals.css)
+        paper: 'rgb(var(--paper) / <alpha-value>)',
+        ink: 'rgb(var(--ink) / <alpha-value>)',
+        muted: 'rgb(var(--muted) / <alpha-value>)',
+        faint: 'rgb(var(--faint) / <alpha-value>)',
+        rule: 'rgb(var(--rule) / <alpha-value>)',
+        accent: 'rgb(var(--accent) / <alpha-value>)',
       },
       fontFamily: {
         display: ['var(--font-display)', 'Impact', 'sans-serif'],

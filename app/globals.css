@@ -3,9 +3,40 @@
 @tailwind utilities;
 
 @layer base {
+  /* Content colours as RGB triplets so Tailwind opacity modifiers keep working. */
+  :root {
+    --paper: 244 243 240;
+    --ink: 24 24 26;
+    --muted: 97 97 95;
+    --faint: 147 147 143;
+    --rule: 222 220 215;
+    --accent: 180 80 42;
+  }
+
+  /* Dark: the paper panel goes charcoal-black, type goes chalk, rust brightens a touch. */
+  .dark {
+    --paper: 22 22 24;
+    --ink: 236 235 231;
+    --muted: 165 164 160;
+    --faint: 118 117 113;
+    --rule: 48 48 51;
+    --accent: 214 112 70;
+  }
+
   html {
     color-scheme: light;
     background: theme('colors.shell');
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  /* theme switch circle reveal (View Transitions): the new page is clipped in by script */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
   }
 
   body {

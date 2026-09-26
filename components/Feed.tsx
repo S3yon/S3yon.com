@@ -139,7 +139,7 @@ function Entry({ entry }: { entry: FeedEntry }) {
           />
         )}
         <motion.span
-          className={`relative grid h-9 w-9 place-items-center rounded-full border ${entry.logo ? 'bg-white' : 'bg-paper'} ${tone}`}
+          className={`relative grid h-9 w-9 place-items-center rounded-full border ${entry.logo ? 'bg-white dark:bg-[#ECEBE7]' : 'bg-paper'} ${tone}`}
           initial={false}
           animate={hidden ? { scale: 0.5, opacity: 0 } : { scale: 1, opacity: 1 }}
           transition={
