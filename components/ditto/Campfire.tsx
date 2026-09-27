@@ -296,7 +296,11 @@ export default function Campfire() {
     // runner that lands after an up-fling hops straight back).
     let way = 0;
     let climbed = 0;
-    let lastY = window.scrollY;
+    // Scroll position clamped to the page (a phone's bounce past the bottom reads as scroll), and
+    // a scroll that comes with a viewport resize (a phone toolbar showing or hiding) is ignored.
+    const scrollPos = () => clamp(window.scrollY, 0, document.documentElement.scrollHeight - window.innerHeight);
+    let lastY = scrollPos();
+    let lastH = window.innerHeight;
     const gap = () => {
       const a = spotOf(runner());
       const b = spotOf(seat.current);
@@ -322,8 +326,11 @@ export default function Campfire() {
       if (!raf) raf = requestAnimationFrame(poll);
     };
     const onScroll = () => {
-      const dy = window.scrollY - lastY;
-      lastY = window.scrollY;
+      const y = scrollPos();
+      const resized = window.innerHeight !== lastH;
+      lastH = window.innerHeight;
+      const dy = resized ? 0 : y - lastY;
+      lastY = y;
       const now = performance.now();
       if (dy) {
         way = Math.sign(dy);
