@@ -16,6 +16,7 @@ import Reveal from './Reveal';
 import Pikachu, { type PikaFacing } from './Pikachu';
 import { DittoSprite, DittoPika } from './ditto/Ditto';
 import Wanderer from './ditto/Wanderer';
+import { setDuo, useDuo, type DittoStage } from '@/lib/duo';
 import { useInViewOnce, type ViewState } from '@/lib/use-in-view-once';
 import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
 import type { GithubStats } from '@/lib/github';
@@ -267,7 +268,6 @@ const LINES = ['Pika!', 'Pika pika!', 'Chu~', 'Pikachu!'];
 
 // Easter egg: on 1 visit in 10 (or with ?ditto) the rail's Pikachu is Ditto in disguise.
 // 'pika' = disguised, 'blob' = the disguise has melted, 'copy' = walks on as a lavender Pikachu.
-type DittoStage = 'off' | 'pika' | 'blob' | 'copy';
 const DITTO_LINES = ['Ditto!', 'Pika… to!', 'Dit-chu!'];
 
 type BubbleBody = { kind: 'mood'; mood: Mood } | { kind: 'text'; text: string };
@@ -286,6 +286,8 @@ type Bubble = { id: number } & BubbleBody;
 //    and one of its tap lines is the song
 //  - sometimes it's Ditto (see DittoStage): the second tap slips ("Pika… Ditto?"), the third
 //    melts the disguise, and it walks the rest of the visit as a lavender copy
+//  - when the footer campfire scrolls into view it jumps off the rail to sit there (see
+//    ditto/Campfire.tsx); the runner here is hidden until it jumps back
 function Rail({
   startsAtRow = false,
   music = null,
@@ -307,6 +309,7 @@ function Rail({
   const progress = useSpring(scrollYProgress, { stiffness: 260, damping: 34, restDelta: 0.0005 });
   const height = useTransform(progress, (v) => `${(v * 100).toFixed(2)}%`);
   const velocity = useVelocity(scrollY);
+  const away = useDuo().camp !== 'rail';
 
   const [walking, setWalking] = useState(false);
   const [fast, setFast] = useState(false);
@@ -464,7 +467,7 @@ function Rail({
         style={{ top: height }}
         className="absolute left-1/2 z-20 -translate-x-1/2 -translate-y-[62%]"
       >
-        <div ref={hopScope} className="relative">
+        <div ref={hopScope} data-rail-runner className={`relative ${away ? 'invisible' : ''}`}>
           <button
             type="button"
             aria-label="Pikachu"
@@ -833,6 +836,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has('ditto') || Math.random() < 0.1) setDitto('pika');
   }, []);
+  useEffect(() => setDuo({ stage: ditto }), [ditto]);
   const [filter, setFilter] = useState<FilterKey>('all');
   const [filtered, setFiltered] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
