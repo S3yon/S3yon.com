@@ -15,7 +15,6 @@ import {
 import Reveal from './Reveal';
 import Pikachu, { type PikaFacing } from './Pikachu';
 import { DittoSprite, DittoPika } from './ditto/Ditto';
-import Wanderer from './ditto/Wanderer';
 import { setDuo, useDuo, type DittoStage } from '@/lib/duo';
 import { useInViewOnce, type ViewState } from '@/lib/use-in-view-once';
 import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
@@ -892,7 +891,6 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
             ))}
           </motion.div>
         </AnimatePresence>
-        <Wanderer />
       </div>
     </FeedMode.Provider>
   );
