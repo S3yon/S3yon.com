@@ -23,6 +23,17 @@ export const feed: FeedEntry[] = [
   {
     year: 2026,
     month: 'September',
+    title: 'Get Into Gear Panel',
+    org: 'GDG Sheridan',
+    logo: '/logos/gdgsheridan.png',
+    orgUrl: 'https://www.gdgsheridan.com/',
+    kind: 'community',
+    description:
+      'Shot headshots for everyone who came and filmed the event. Left with a lot of new connections and a better read on the industry.',
+  },
+  {
+    year: 2026,
+    month: 'September',
     title: 'Photographer',
     org: 'Hack the North',
     logo: '/logos/hackthenorth.png',
@@ -311,12 +322,6 @@ export interface UpcomingEvent {
 }
 
 export const upcoming: UpcomingEvent[] = [
-  {
-    date: '2026-09-26',
-    title: 'Get Into Gear Panel @ GDG Sheridan',
-    detail: 'Panel and networking on cross-collaboration beyond hackathons, then a Google Cloud Career Launchpad workshop.',
-    url: 'https://gdg.community.dev/events/details/google-gdg-on-campus-sheridan-college-trafalgar-road-campus-oakville-canada-presents-get-into-gear-a-future-beyond-hackathons-cross-collaboration-in-the-professional-world/',
-  },
   {
     date: '2026-10-04',
     title: 'Case Closed @ GDG Sheridan',
