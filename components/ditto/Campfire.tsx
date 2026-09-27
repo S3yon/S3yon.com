@@ -6,14 +6,16 @@ import Pikachu, { type PikaFacing } from '../Pikachu';
 import { DittoPika, DittoSprite } from './Ditto';
 import { getDuo, setDuo, useDuo, type DittoStage } from '@/lib/duo';
 
-// The footer campfire: the site's pixel sprites sitting round a pixel fire. Tap one and its hand-drawn art pops
-// up above it, next mood each tap. Every 4th Ditto tap it transforms: the sprite becomes the
+// The footer campfire: the site's pixel sprites sitting round a pixel fire, right under the end
+// of the timeline rail (Trailhead). Tap one and its hand-drawn art pops up above it, next mood each tap. Every 4th Ditto tap it transforms: the sprite becomes the
 // lavender Pikachu and the portrait is Pikachu in Ditto's colours. The next tap turns it back.
 //
-// One of them waits here and the other is the rail runner: when the fire scrolls into view the
-// runner jumps off the end of the timeline into its seat, and jumps back when you scroll up.
-// Normally Ditto waits and Pikachu joins. On an Imposter visit Pikachu waits, and the rail's
-// Ditto lands still in its disguise, then turns back into Ditto.
+// The rail runner (whoever it is) always takes the LEFT seat, nearest the rail; the other one
+// waits in the RIGHT seat. When the runner reaches the end of the rail it takes one short hop down
+// into its seat; the first bit of upward scroll sends it hopping back onto the line. Normally Ditto waits and Pikachu joins. On an Imposter
+// visit Pikachu waits, and the rail's Ditto lands still in its disguise, then turns back into
+// Ditto. Portraits pop by character, not seat. The footer's links send `campfire:flare` (the fire
+// flares) and `campfire:welcome` (both turn to face you and hop).
 const MOODS = 12; // frames in pikachu-moods.webp and ditto-moods.webp, same mood order
 const COPIES = 3; // frames in ditto-pika.webp
 const TRANSFORM_EVERY = 4;
@@ -59,6 +61,7 @@ function Frame({ children }: { children: React.ReactNode }) {
 }
 
 type Look = 'pika' | 'copy' | 'ditto';
+type Spot = { x: number; y: number; s: number }; // bottom-centre, page coordinates; s = scale against 64px
 const railLook = (s: DittoStage): Look => (s === 'copy' ? 'copy' : s === 'blob' ? 'ditto' : 'pika');
 
 function Sprite({ look, facing, walking = false }: { look: Look; facing: PikaFacing; walking?: boolean }) {
@@ -67,110 +70,234 @@ function Sprite({ look, facing, walking = false }: { look: Look; facing: PikaFac
   return <Pikachu facing={facing} walking={walking} />;
 }
 
-// Bottom-centre of an element in page coordinates, and its scale against the 64px sprite.
-function spot(el: Element) {
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const frame = () => new Promise((r) => requestAnimationFrame(() => r(null)));
+const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+function spotOf(el: Element | null | undefined): Spot | null {
+  if (!el) return null;
   const r = el.getBoundingClientRect();
   return { x: r.left + r.width / 2 + window.scrollX, y: r.bottom + window.scrollY, s: r.height / 64 };
 }
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const frame = () => new Promise((r) => requestAnimationFrame(() => r(null)));
+// Keep a start point inside the viewport, so a hop never begins off screen.
+const onScreen = (p: Spot | null): Spot | null => (p ? { ...p, y: Math.min(p.y, window.scrollY + window.innerHeight - 6) } : null);
+
+// Place the flyer: bottom-centre on p, squashed by sx/sy.
+function put(el: HTMLElement, p: Spot, sx = 1, sy = 1) {
+  el.style.transform = `translate(${p.x - 32}px, ${p.y - 64}px) scale(${p.s * sx}, ${p.s * sy})`;
+  el.style.opacity = '1';
+}
+const tween = (duration: number, onUpdate: (t: number) => void, ease: 'easeOut' | 'easeInOut' = 'easeInOut') =>
+  animate(0, 1, { duration, ease, onUpdate });
+
+// A quadratic curve from a to b whose middle rises `lift` px above the higher end, head kept
+// below the 64px sticky filter bar.
+function arc(a: Spot, b: Spot, t: number, lift: number): Spot {
+  const ceiling = window.scrollY + 64 + 64 * Math.max(a.s, b.s);
+  const top = Math.max(Math.min(a.y, b.y) - lift, Math.min(ceiling, Math.min(a.y, b.y)));
+  const cx = (a.x + b.x) / 2;
+  const cy = 2 * top - (a.y + b.y) / 2;
+  const u = 1 - t;
+  return { x: u * u * a.x + 2 * u * t * cx + t * t * b.x, y: u * u * a.y + 2 * u * t * cy + t * t * b.y, s: lerp(a.s, b.s, t) };
+}
+
+// Three dust puffs kicked out sideways from a landing.
+function puff(p: Spot) {
+  const el = document.createElement('span');
+  el.setAttribute('aria-hidden', 'true');
+  el.style.cssText = `position:absolute;left:${p.x}px;top:${p.y}px;pointer-events:none;z-index:49;`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 600);
+  [-1, 1, -0.4].forEach((d, i) => {
+    const b = document.createElement('span');
+    const r = (6 + i * 2) * p.s;
+    b.style.cssText = `position:absolute;width:${r}px;height:${r}px;left:${-r / 2}px;top:${-r}px;border-radius:50%;background:rgba(150,140,130,0.45);`;
+    el.appendChild(b);
+    b.animate(
+      [{ transform: 'translate(0,0) scale(0.4)', opacity: 0.9 }, { transform: `translate(${d * 22 * p.s}px,${-6 * p.s}px) scale(1.2)`, opacity: 0 }],
+      { duration: 480, easing: 'cubic-bezier(0.2,0.7,0.3,1)', fill: 'forwards' },
+    );
+  });
+}
+
+// One hop: crouch, a smooth curve with a little stretch in the air, squash and dust on landing.
+async function hop(el: HTMLElement, from: () => Spot | null, to: () => Spot | null, lift: number, pace: number) {
+  const a = from();
+  const b0 = to();
+  if (!a || !b0) return;
+  await tween(0.1 * pace, (t) => put(el, a, 1 + 0.18 * t, 1 - 0.22 * t), 'easeOut');
+  const dist = Math.hypot(b0.x - a.x, b0.y - a.y);
+  let b = b0;
+  await tween(clamp(0.45 + dist / 1800, 0.5, 0.9) * pace, (t) => {
+    b = to() ?? b; // the rail runner can still be sliding on its spring
+    const k = Math.sin(t * Math.PI);
+    put(el, arc(a, b, t, lift), 1 - 0.08 * k, 1 + 0.1 * k);
+  });
+  puff(b);
+  await tween(0.18 * pace, (t) => put(el, b, 1.22 - 0.22 * t, 0.78 + 0.22 * t), 'easeOut');
+}
+
+// Warm light thrown by the fire, centred on it, flickering. The footer puts it behind the scene.
+export function CampGlow({ size = 560, strong = 0.2 }: { size?: number; strong?: number }) {
+  return (
+    <span
+      aria-hidden
+      className="camp-glow pointer-events-none absolute left-[82px] top-[40px] -z-10 -translate-x-1/2 -translate-y-1/2 rounded-full sm:left-[114px] sm:top-[56px]"
+      style={{ width: size, height: size, background: `radial-gradient(closest-side, rgba(232,119,58,${strong}), rgba(232,119,58,${strong / 3}) 45%, transparent)` }}
+    >
+      <style>{`
+        @keyframes camp-glow { 0%,100% { opacity: .85; transform: translate(-50%,-50%) scale(1); } 30% { opacity: 1; transform: translate(-50%,-50%) scale(1.04); } 60% { opacity: .75; transform: translate(-50%,-50%) scale(.98); } }
+        .camp-glow { animation: camp-glow 2.6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { .camp-glow { animation: none; } }
+      `}</style>
+    </span>
+  );
+}
+type Who = 'pika' | 'ditto';
 
 export default function Campfire() {
-  const [open, setOpen] = useState<null | 'pika' | 'ditto'>(null);
+  const [open, setOpen] = useState<null | { who: Who; left: number; top: number }>(null);
   const [mood, setMood] = useState(10);
   const [dtap, setDtap] = useState(0); // Ditto taps so far
   const copying = dtap > 0 && dtap % TRANSFORM_EVERY === 0;
   const [flare, setFlare] = useState(false);
+  const [welcome, setWelcome] = useState(0); // >0: both turn to face you and hop (the footer asks)
   const box = useRef<HTMLDivElement>(null);
   const { stage } = useDuo();
   const imposter = stage !== 'off';
-  // the rail runner's seat: empty (null) until it lands, then what it looks like
+  const runnerWho: Who = imposter ? 'ditto' : 'pika';
+  const waiterWho: Who = imposter ? 'pika' : 'ditto';
+  // the left seat: empty (null) until the runner lands, then what it looks like
   const [join, setJoin] = useState<Look | null>(null);
-  const [fly, setFly] = useState<{ look: Look; facing: PikaFacing } | null>(null);
+  const [fly, setFly] = useState<{ look: Look; facing: PikaFacing; walking: boolean } | null>(null);
   const flyer = useRef<HTMLSpanElement>(null);
   const row = useRef<HTMLDivElement>(null);
-  const seat = useRef<{ pika: HTMLSpanElement | null; ditto: HTMLSpanElement | null }>({ pika: null, ditto: null });
+  const seat = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     let seen = 0;
     let busy = false;
+    let alive = true;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const runner = () => document.querySelector('[data-rail-runner] button');
-    const target = () => seat.current[getDuo().stage === 'off' ? 'pika' : 'ditto'];
-    // wait until the page and the rail's spring stop moving, so the arc is measured where it ends up
-    const settle = async () => {
-      let last = NaN;
-      for (let i = 0, still = 0; i < 45 && still < 4; i++) {
-        await frame();
-        const r = runner()?.getBoundingClientRect();
-        const y = (r ? r.top : 0) + window.scrollY;
-        still = Math.abs(y - last) < 0.5 ? still + 1 : 0;
-        last = y;
-      }
-    };
-    // an arc: a small hop up off the start, then a fall into the end, peaking below the sticky filter bar
-    const jump = async (from: ReturnType<typeof spot>, to: ReturnType<typeof spot>, look: Look, facing: PikaFacing) => {
-      if (reduce || Math.abs(to.y - from.y) > window.innerHeight * 2) return;
-      setFly({ look, facing });
+    const from = () => spotOf(runner());
+    const to = () => spotOf(seat.current);
+    // mount the flyer (starts at opacity 0) and return it
+    const show = async (look: Look, facing: PikaFacing) => {
+      setFly({ look, facing, walking: true });
       await frame();
-      if (!flyer.current) return;
-      const top = Math.max(Math.min(from.y, to.y) - 70, window.scrollY + 64 + 64 * Math.max(from.s, to.s));
-      await animate(
-        flyer.current,
-        {
-          x: [from.x - 32, from.x + (to.x - from.x) * 0.3 - 32, to.x - 32],
-          y: [from.y - 64, top - 64, to.y - 64],
-          scale: [from.s, from.s + (to.s - from.s) * 0.3, to.s],
-        },
-        { duration: 0.8, times: [0, 0.3, 1], ease: ['easeOut', 'easeIn'] },
-      );
+      return flyer.current;
+    };
+    // after landing in its disguise, an Imposter Ditto turns back into itself
+    let swap = 0;
+    const land = (look: Look) => {
+      setFly(null);
+      setJoin(look);
+      if (look !== 'ditto' && getDuo().stage !== 'off') swap = window.setTimeout(() => setJoin('ditto'), 450);
+    };
+    // skip the animation when there is nothing sensible to animate (reduced motion, far apart).
+    // Down is one short step into the seat; up is a higher hop so it reads as a jump.
+    const trip = async (el: HTMLElement | null, dir: 'down' | 'up') => {
+      const a = from();
+      const b = to();
+      if (!el || reduce || !a || !b || Math.abs(a.y - b.y) > window.innerHeight * 2.5) return;
+      try {
+        if (dir === 'down') await hop(el, from, to, 22, 0.8);
+        else await hop(el, () => onScreen(to()), from, 44, 0.75);
+      } catch { /* never leave the runner stuck mid-air */ }
     };
     const down = async () => {
       busy = true;
-      await settle();
       const look = railLook(getDuo().stage);
       setDuo({ camp: 'flying' });
-      const r = runner();
-      const t = target();
-      if (r && t) await jump(spot(r), spot(t), look, 'down');
-      setFly(null);
-      setJoin(look);
-      if (look !== 'ditto' && getDuo().stage !== 'off') {
-        await wait(450);
-        setJoin('ditto');
-      }
+      const el = await show(look, 'down');
+      await trip(el, 'down');
+      if (!alive) return;
+      land(look);
+      if (look !== 'ditto' && getDuo().stage !== 'off') await wait(450);
       setDuo({ camp: 'camp' });
       busy = false;
       check();
     };
     const up = async () => {
       busy = true;
+      clearTimeout(swap);
       const look = railLook(getDuo().stage);
       if (getDuo().stage !== 'off' && look !== 'ditto') {
         setJoin(look);
-        await wait(350);
+        await wait(180);
       }
-      await settle();
       setDuo({ camp: 'flying' });
-      const t = target();
-      const from = t && spot(t);
+      const el = await show(look, 'up'); // mount the flyer before the seat empties
       setJoin(null);
-      const r = runner();
-      if (r && from) await jump(from, spot(r), look, 'up');
+      await trip(el, 'up');
+      if (!alive) return;
       setFly(null);
       setDuo({ camp: 'rail' });
       busy = false;
       check();
     };
-    const check = () => {
-      if (busy) return;
-      const at = getDuo().camp;
-      if (seen >= 0.6 && at === 'rail') down();
-      else if (seen < 0.2 && at === 'camp') up();
+    // Going down, the runner has reached the end of the rail, just above the seat. Going
+    // up, the first bit of upward scroll sends it back to the end of the line, while the seat is
+    // still on screen (the rail's end sits well above the runner's line at the page bottom, so
+    // waiting for the gap to grow would start the hop off screen). `way` is the last scroll
+    // direction, `climbed` the upward scroll since it sat down.
+    let way = 0;
+    let climbed = 0;
+    let lastY = window.scrollY;
+    const gap = () => {
+      const a = spotOf(runner());
+      const b = spotOf(seat.current);
+      return a && b ? b.y - a.y : Infinity;
     };
-    const io = new IntersectionObserver(([e]) => { seen = e.intersectionRatio; check(); }, { threshold: [0, 0.2, 0.6, 1] });
+    const check = () => {
+      if (busy || !alive) return;
+      const at = getDuo().camp;
+      const reach = 64 * (spotOf(seat.current)?.s ?? 1) + 120;
+      if (at === 'rail' && seen > 0 && gap() < reach && way >= 0) down();
+      else if (at === 'camp' && climbed > 24) up();
+    };
+    // keep checking for a moment after each scroll: the rail's spring is still carrying the runner
+    let raf = 0;
+    let until = 0;
+    const poll = () => {
+      raf = 0;
+      check();
+      if (performance.now() < until) raf = requestAnimationFrame(poll);
+    };
+    const onScroll = () => {
+      const dy = window.scrollY - lastY;
+      lastY = window.scrollY;
+      if (dy) {
+        way = Math.sign(dy);
+        climbed = dy < 0 && getDuo().camp === 'camp' ? climbed - dy : 0;
+      }
+      until = performance.now() + 1200;
+      if (!raf) raf = requestAnimationFrame(poll);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    const io = new IntersectionObserver(([e]) => { seen = e.intersectionRatio; onScroll(); }, { threshold: [0, 0.2, 0.6, 1] });
     if (row.current) io.observe(row.current);
-    return () => { io.disconnect(); setDuo({ camp: 'rail' }); };
+    return () => {
+      alive = false;
+      io.disconnect();
+      cancelAnimationFrame(raf);
+      clearTimeout(swap);
+      window.removeEventListener('scroll', onScroll);
+      setDuo({ camp: 'rail' });
+    };
+  }, []);
+
+  // anything on the page can stoke the fire (the footer's links do, on hover)
+  useEffect(() => {
+    let t = 0;
+    const on = () => { setFlare(true); clearTimeout(t); t = window.setTimeout(() => setFlare(false), 400); };
+    let w = 0;
+    const hi = () => { setWelcome((n) => n + 1); clearTimeout(w); w = window.setTimeout(() => setWelcome(0), 1600); };
+    window.addEventListener('campfire:flare', on);
+    window.addEventListener('campfire:welcome', hi);
+    return () => { clearTimeout(t); clearTimeout(w); window.removeEventListener('campfire:flare', on); window.removeEventListener('campfire:welcome', hi); };
   }, []);
 
   useEffect(() => {
@@ -179,14 +306,32 @@ export default function Campfire() {
     document.addEventListener('pointerdown', off);
     return () => document.removeEventListener('pointerdown', off);
   }, [open]);
-  const tapPika = () => { setMood((m) => (open === 'pika' ? (m + 1) % MOODS : m)); setOpen('pika'); };
-  const tapDitto = () => { setDtap((d) => d + 1); setOpen('ditto'); };
+
+  // the portrait pops up centred over whoever was tapped, its bottom just above their head
+  const tap = (who: Who, el: HTMLElement) => {
+    const b = box.current!.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const pos = { who, left: Math.max(-14, r.left + r.width / 2 - b.left - 68), top: r.top - b.top - 146 };
+    if (who === 'pika') setMood((m) => (open?.who === 'pika' ? (m + 1) % MOODS : m));
+    else setDtap((d) => d + 1);
+    setOpen(pos);
+  };
+  const character = (who: Who, side: PikaFacing) => {
+    const facing = welcome ? 'down' : side;
+    return who === 'pika' ? <Pikachu walking={false} facing={facing} /> : copying ? <DittoPika facing={facing} /> : <DittoSprite facing={facing} />;
+  };
+
   return (
-    <div ref={box} data-open={open ?? ''} data-copying={copying ? '1' : ''} className="relative h-[260px] w-[300px]">
+    <div
+      ref={box}
+      data-open={open?.who ?? ''}
+      data-copying={copying ? '1' : ''}
+      className="relative mt-3 h-16 sm:h-24"
+    >
       {open && (
-        <div className="duo-pop absolute top-0 z-10" style={{ left: open === 'pika' ? 166 : 0 }}>
+        <div className="duo-pop absolute z-30" style={{ left: open.left, top: open.top }}>
           <Frame>
-            {open === 'pika' ? (
+            {open.who === 'pika' ? (
               <Portrait src="/sprites/pikachu-moods.webp" frames={MOODS} frame={mood} label="Pikachu portrait" />
             ) : copying ? (
               <Portrait src="/sprites/ditto-pika.webp" frames={COPIES} frame={(dtap / TRANSFORM_EVERY - 1) % COPIES} label="Ditto as Pikachu portrait" />
@@ -201,28 +346,34 @@ export default function Campfire() {
         .duo-pop { animation: duo-pop 180ms ease-out; }
         @keyframes duo-swap { from { transform: scale(1.4, 0.3); } to { transform: none; } }
         .duo-swap { animation: duo-swap 320ms cubic-bezier(0.3, 1.6, 0.5, 1); transform-origin: 50% 100%; }
+        @keyframes duo-hi { 0%, 100% { transform: none; } 35% { transform: translateY(-9px); } 60% { transform: translateY(0) scale(1.08, 0.92); } }
+        .duo-hi { animation: duo-hi 420ms ease-out; }
+        @media (prefers-reduced-motion: reduce) { .duo-hi { animation: none; } }
       `}</style>
-      <div ref={row} className="absolute bottom-2 left-0 right-0 flex origin-bottom scale-150 items-end justify-center gap-3">
-        <button type="button" aria-label="Ditto" disabled={imposter && !join} onClick={tapDitto} className="cursor-pointer transition-transform hover:-translate-y-0.5 disabled:cursor-default">
-          <span ref={(el) => { seat.current.ditto = el; }} className={`block ${imposter && !join ? 'invisible' : ''}`}>
+      <div
+        ref={row}
+        className="absolute bottom-0 left-[-14.5px] flex origin-bottom-left items-end gap-3 sm:left-[-30.5px] sm:scale-150"
+      >
+        {/* left seat: the rail runner */}
+        <button type="button" aria-label={runnerWho === 'pika' ? 'Pikachu' : 'Ditto'} data-seat="left" disabled={!join} onClick={(e) => tap(runnerWho, e.currentTarget)} className="cursor-pointer transition-transform hover:-translate-y-0.5 disabled:cursor-default">
+          <span ref={seat} key={`hi${welcome}`} className={`block ${join ? '' : 'invisible'} ${welcome ? 'duo-hi' : ''}`}>
             <span key={imposter ? join ?? '' : ''} className="duo-swap block">
-              {imposter && join && join !== 'ditto' ? <Sprite look={join} facing="right" /> : copying ? <DittoPika facing="right" /> : <DittoSprite facing="right" />}
+              {imposter && join && join !== 'ditto' ? <Sprite look={join} facing="right" /> : character(runnerWho, 'right')}
             </span>
           </span>
         </button>
         <button type="button" aria-label="Campfire" onClick={() => { setFlare(true); setTimeout(() => setFlare(false), 400); }} className="mb-2">
           <PixelFire flare={flare} />
         </button>
-        <button type="button" aria-label="Pikachu" disabled={!imposter && !join} onClick={tapPika} className="cursor-pointer transition-transform hover:-translate-y-0.5 disabled:cursor-default">
-          <span ref={(el) => { seat.current.pika = el; }} className={`block ${!imposter && !join ? 'invisible' : ''}`}>
-            <Pikachu walking={false} facing="left" />
-          </span>
+        {/* right seat: the one who waits */}
+        <button type="button" aria-label={waiterWho === 'pika' ? 'Pikachu' : 'Ditto'} data-seat="right" onClick={(e) => tap(waiterWho, e.currentTarget)} className="cursor-pointer transition-transform hover:-translate-y-0.5">
+          <span key={`hi${welcome}`} className={`block ${welcome ? 'duo-hi' : ''}`}>{character(waiterWho, 'left')}</span>
         </button>
       </div>
       {fly &&
         createPortal(
-          <span ref={flyer} aria-hidden className="pointer-events-none absolute left-0 top-0 z-50 block h-16 w-16" style={{ transformOrigin: '50% 100%' }}>
-            <Sprite look={fly.look} facing={fly.facing} walking />
+          <span ref={flyer} aria-hidden data-flyer className="pointer-events-none absolute left-0 top-0 z-50 block h-16 w-16" style={{ transformOrigin: '50% 100%', opacity: 0 }}>
+            <Sprite look={fly.look} facing={fly.facing} walking={fly.walking} />
           </span>,
           document.body,
         )}
