@@ -385,12 +385,14 @@ function Rail({
     next();
   };
 
-  useMotionValueEvent(scrollY, 'change', () => {
-    const v = velocity.get();
-    if (Math.abs(v) < 5) return;
+  // Direction comes from the scroll step itself: the velocity value lags a frame, which used to
+  // swallow the first scroll after a pause and leave it standing, glancing sideways.
+  useMotionValueEvent(scrollY, 'change', (y) => {
+    const dy = y - (scrollY.getPrevious() ?? y);
+    if (Math.abs(dy) < 0.5) return;
     window.clearTimeout(timers.current.idle);
-    setFacing(v > 0 ? 'down' : 'up');
-    setFast(Math.abs(v) > 1400);
+    setFacing(dy > 0 ? 'down' : 'up');
+    setFast(Math.abs(velocity.get()) > 1400);
     setWalking(true);
     window.clearTimeout(timers.current.stop);
     timers.current.stop = window.setTimeout(() => {
@@ -412,7 +414,7 @@ function Rail({
       }
     };
     window.addEventListener('timeline:reveal', onReveal);
-    scheduleIdle();
+    // no idle glances until the reader has scrolled and stopped: it faces you until then
     new Image().src = '/sprites/pikachu-moods.webp';
 
     // Hello: once per visit, when the reader first pauses with Pikachu fully in view (and
