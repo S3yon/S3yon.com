@@ -60,7 +60,7 @@ function Frame({ children }: { children: React.ReactNode }) {
 }
 
 type Look = 'pika' | 'copy' | 'ditto';
-type Spot = { x: number; y: number; s: number }; // bottom-centre, page coordinates; s = scale against 64px
+type Spot = { x: number; y: number; s: number }; // bottom-centre, viewport coordinates; s = scale against 64px
 const railLook = (s: DittoStage): Look => (s === 'copy' ? 'copy' : s === 'blob' ? 'ditto' : 'pika');
 
 function Sprite({ look, facing, walking = false }: { look: Look; facing: PikaFacing; walking?: boolean }) {
@@ -77,12 +77,12 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 function spotOf(el: Element | null | undefined): Spot | null {
   if (!el) return null;
   const r = el.getBoundingClientRect();
-  return { x: r.left + r.width / 2 + window.scrollX, y: r.bottom + window.scrollY, s: r.height / 64 };
+  return { x: r.left + r.width / 2, y: r.bottom, s: r.height / 64 };
 }
 // Keep a start point inside the viewport, so a hop never begins off screen.
-const onScreen = (p: Spot | null): Spot | null => (p ? { ...p, y: Math.min(p.y, window.scrollY + window.innerHeight - 6) } : null);
+const onScreen = (p: Spot | null): Spot | null => (p ? { ...p, y: Math.min(p.y, window.innerHeight - 6) } : null);
 
-// Place the flyer: bottom-centre on p, squashed by sx/sy.
+// Place the flyer (position: fixed, so scrolling never drags it): bottom-centre on p, squashed by sx/sy.
 function put(el: HTMLElement, p: Spot, sx = 1, sy = 1) {
   el.style.transform = `translate(${p.x - 32}px, ${p.y - 64}px) scale(${p.s * sx}, ${p.s * sy})`;
   el.style.opacity = '1';
@@ -105,7 +105,7 @@ const tween = (duration: number, onUpdate: (t: number) => void, ease: keyof type
 // A quadratic curve from a to b whose middle rises `lift` px above the higher end, head kept
 // below the 64px sticky filter bar.
 function arc(a: Spot, b: Spot, t: number, lift: number): Spot {
-  const ceiling = window.scrollY + 64 + 64 * Math.max(a.s, b.s);
+  const ceiling = 64 + 64 * Math.max(a.s, b.s);
   const top = Math.max(Math.min(a.y, b.y) - lift, Math.min(ceiling, Math.min(a.y, b.y)));
   const cx = (a.x + b.x) / 2;
   const cy = 2 * top - (a.y + b.y) / 2;
@@ -117,7 +117,7 @@ function arc(a: Spot, b: Spot, t: number, lift: number): Spot {
 function puff(p: Spot) {
   const el = document.createElement('span');
   el.setAttribute('aria-hidden', 'true');
-  el.style.cssText = `position:absolute;left:${p.x}px;top:${p.y}px;pointer-events:none;z-index:49;`;
+  el.style.cssText = `position:absolute;left:${p.x + window.scrollX}px;top:${p.y + window.scrollY}px;pointer-events:none;z-index:49;`;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 600);
   [-1, 1, -0.4].forEach((d, i) => {
@@ -133,24 +133,26 @@ function puff(p: Spot) {
 }
 
 // One hop: crouch, a smooth curve with a little stretch in the air, squash and dust on landing.
-// Both ends are read every frame (the page scrolls and the rail's spring slides the runner), so
-// the curve never starts from a stale spot. If `rush` turns true mid-hop (a fast scroll), it
-// stops where it is and returns false; the caller swaps it straight into place.
+// The take-off spot is fixed once it crouches (it has left that spot, so it shouldn't slide
+// with it); the landing spot is re-read every frame, since the page and the rail's spring keep
+// moving it. If `rush` turns true in the crouch or the first part of the flight (a fast scroll),
+// it stops and returns false; the caller swaps it straight into place. Past that it finishes.
 async function hop(el: HTMLElement, from: () => Spot | null, to: () => Spot | null, lift: number, pace: number, rush: () => boolean) {
-  let a = from();
+  const a = from();
   let b = to();
   if (!a || !b) return false;
-  if (!(await tween(0.1 * pace, (t) => { a = from() ?? a!; put(el, a, 1 + 0.18 * t, 1 - 0.22 * t); }, 'easeOut', rush))) return false;
+  if (!(await tween(0.1 * pace, (t) => put(el, a, 1 + 0.18 * t, 1 - 0.22 * t), 'easeOut', rush))) return false;
   const dist = Math.hypot(b.x - a.x, b.y - a.y);
+  let at = 0;
   const flew = await tween(clamp(0.45 + dist / 1800, 0.5, 0.9) * pace, (t) => {
-    a = from() ?? a!;
+    at = t;
     b = to() ?? b!;
     const k = Math.sin(t * Math.PI);
     put(el, arc(a, b, t, lift), 1 - 0.08 * k, 1 + 0.1 * k);
-  }, 'easeInOut', rush);
+  }, 'easeInOut', () => at < 0.35 && rush());
   if (!flew) return false;
   puff(b);
-  await tween(0.18 * pace, (t) => { b = to() ?? b!; put(el, b, 1.22 - 0.22 * t, 0.78 + 0.22 * t); }, 'easeOut', rush);
+  await tween(0.18 * pace, (t) => { b = to() ?? b!; put(el, b, 1.22 - 0.22 * t, 0.78 + 0.22 * t); }, 'easeOut');
   return true;
 }
 
@@ -437,7 +439,7 @@ export default function Campfire() {
       </div>
       {fly &&
         createPortal(
-          <span ref={flyer} aria-hidden data-flyer className="pointer-events-none absolute left-0 top-0 z-50 block h-16 w-16" style={{ transformOrigin: '50% 100%', opacity: 0 }}>
+          <span ref={flyer} aria-hidden data-flyer className="pointer-events-none fixed left-0 top-0 z-50 block h-16 w-16" style={{ transformOrigin: '50% 100%', opacity: 0 }}>
             <Sprite look={fly.look} facing={fly.facing} walking={fly.walking} />
           </span>,
           document.body,
