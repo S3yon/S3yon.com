@@ -14,6 +14,7 @@ import {
 } from 'motion/react';
 import Reveal from './Reveal';
 import Pikachu, { type PikaFacing } from './Pikachu';
+import { DittoSprite, DittoPika } from './ditto/Ditto';
 import { useInViewOnce, type ViewState } from '@/lib/use-in-view-once';
 import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
 import type { GithubStats } from '@/lib/github';
@@ -263,6 +264,11 @@ const MOOD_LABEL: Record<Mood, string> = {
 const TAP_MOODS: Mood[] = [...MOODS];
 const LINES = ['Pika!', 'Pika pika!', 'Chu~', 'Pikachu!'];
 
+// Easter egg: on 1 visit in 10 (or with ?ditto) the rail's Pikachu is Ditto in disguise.
+// 'pika' = disguised, 'blob' = the disguise has melted, 'copy' = walks on as a lavender Pikachu.
+type DittoStage = 'off' | 'pika' | 'blob' | 'copy';
+const DITTO_LINES = ['Ditto!', 'Pika… to!', 'Dit-chu!'];
+
 type BubbleBody = { kind: 'mood'; mood: Mood } | { kind: 'text'; text: string };
 type Bubble = { id: number } & BubbleBody;
 
@@ -277,7 +283,19 @@ type Bubble = { id: number } & BubbleBody;
 //  - tap or click it: a mood portrait on the first tap and now and then, otherwise a "Pika!" line
 //  - while Spotify is playing and it stands still, it bobs to the beat with notes floating up,
 //    and one of its tap lines is the song
-function Rail({ startsAtRow = false, music = null }: { startsAtRow?: boolean; music?: string | null }) {
+//  - sometimes it's Ditto (see DittoStage): the second tap slips ("Pika… Ditto?"), the third
+//    melts the disguise, and it walks the rest of the visit as a lavender copy
+function Rail({
+  startsAtRow = false,
+  music = null,
+  ditto = 'off',
+  setDitto,
+}: {
+  startsAtRow?: boolean;
+  music?: string | null;
+  ditto?: DittoStage;
+  setDitto?: (s: DittoStage) => void;
+}) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [hopScope, animateHop] = useAnimate();
   const { scrollY } = useScroll();
@@ -319,6 +337,15 @@ function Rail({ startsAtRow = false, music = null }: { startsAtRow?: boolean; mu
   // than three "Pika!" lines in a row. The rest are lines, cycling.
   const onTap = () => {
     taps.current += 1;
+    if (ditto === 'blob') return;
+    if (ditto === 'copy') return speak(DITTO_LINES[taps.current % DITTO_LINES.length]);
+    if (ditto === 'pika' && taps.current >= 2) {
+      if (taps.current === 2) return speak('Pika… Ditto?');
+      setDitto?.('blob');
+      show({ kind: 'text', text: '…Ditto.' }, 1800);
+      window.setTimeout(() => setDitto?.('copy'), 2200);
+      return;
+    }
     const portrait = taps.current === 1 || sinceMood.current >= 3 || Math.random() < 0.3;
     if (portrait) {
       const options = TAP_MOODS.filter((m) => m !== lastMood.current);
@@ -449,7 +476,26 @@ function Rail({ startsAtRow = false, music = null }: { startsAtRow?: boolean; mu
           >
             {/* while music plays and it's standing still, it bobs to the beat */}
             <span className={`block ${music && !walking ? 'animate-[vibe_0.5s_ease-in-out_infinite]' : ''}`}>
-              <Pikachu walking={walking} fast={fast} facing={facing} />
+              {ditto === 'off' || ditto === 'pika' ? (
+                <Pikachu walking={walking} fast={fast} facing={facing} />
+              ) : (
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {/* the disguise melts into Ditto, then Ditto re-forms as its copy */}
+                  <motion.span
+                    key={ditto}
+                    data-testid="rail-ditto"
+                    data-stage={ditto}
+                    className="block"
+                    initial={{ scaleY: 0.2, scaleX: 1.4, opacity: 0 }}
+                    animate={{ scaleY: 1, scaleX: 1, opacity: 1 }}
+                    exit={{ scaleY: 0.2, scaleX: 1.5, opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 380, damping: 18 }}
+                    style={{ originY: 1 }}
+                  >
+                    {ditto === 'blob' ? <DittoSprite walking /> : <DittoPika walking={walking} facing={facing} />}
+                  </motion.span>
+                </AnimatePresence>
+              )}
             </span>
           </button>
           {music && !walking && (
@@ -782,6 +828,10 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
     window.addEventListener('site-music', on);
     return () => window.removeEventListener('site-music', on);
   }, []);
+  const [ditto, setDitto] = useState<DittoStage>('off');
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('ditto') || Math.random() < 0.1) setDitto('pika');
+  }, []);
   const [filter, setFilter] = useState<FilterKey>('all');
   const [filtered, setFiltered] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
@@ -825,7 +875,12 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
             transition={{ duration: 0.45, ease: EASE }}
             className="relative"
           >
-            <Rail startsAtRow={filter === 'all'} music={siteMusic ?? (spotify?.isPlaying ? spotify.title ?? null : null)} />
+            <Rail
+              startsAtRow={filter === 'all'}
+              music={siteMusic ?? (spotify?.isPlaying ? spotify.title ?? null : null)}
+              ditto={ditto}
+              setDitto={setDitto}
+            />
             {filter === 'all' && <LeadRows github={github} spotify={spotify} />}
             {groups.map(({ year, entries }) => (
               <YearSection key={year} year={year} entries={entries} />
