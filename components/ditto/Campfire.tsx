@@ -244,6 +244,7 @@ export default function Campfire() {
     };
     const down = async () => {
       busy = true;
+      climbed = 0;
       const look = railLook(getDuo().stage);
       if (skip()) {
         seatIn(look);
@@ -291,7 +292,8 @@ export default function Campfire() {
     // up, the first bit of upward scroll sends it back to the end of the line, while the seat is
     // still on screen (the rail's end sits well above the runner's line at the page bottom, so
     // waiting for the gap to grow would start the hop off screen). `way` is the last scroll
-    // direction, `climbed` the upward scroll since it sat down.
+    // direction, `climbed` the upward scroll since it left the rail (counted mid-hop too, so a
+    // runner that lands after an up-fling hops straight back).
     let way = 0;
     let climbed = 0;
     let lastY = window.scrollY;
@@ -325,7 +327,7 @@ export default function Campfire() {
       const now = performance.now();
       if (dy) {
         way = Math.sign(dy);
-        climbed = dy < 0 && getDuo().camp === 'camp' ? climbed - dy : 0;
+        climbed = dy < 0 && getDuo().camp !== 'rail' ? climbed - dy : 0;
         const v = Math.abs(dy) / Math.max(8, now - lastT);
         speed = now - lastT > 120 ? v : 0.5 * speed + 0.5 * v;
         lastT = now;
