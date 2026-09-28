@@ -3,10 +3,13 @@
 import { useEffect } from 'react';
 
 // As the timeline panel (#work) rides up, the intro's content drifts up at a third of the scroll
-// speed and fades. `--p` (0 → 1) is how far the panel has risen, set on the intro only so a
-// scroll never restyles the whole page. The CSS is in globals.css.
+// speed and fades. Modern browsers use compositor-driven animation-timeline in globals.css.
+// This hook provides a fallback for browsers without scroll-driven animation support.
 export default function IntroParallax() {
   useEffect(() => {
+    if (typeof CSS !== 'undefined' && CSS.supports && CSS.supports('animation-timeline: scroll()')) {
+      return;
+    }
     const intro = document.querySelector<HTMLElement>('[data-intro]');
     if (!intro) return;
     let raf = 0;
