@@ -8,13 +8,19 @@ import { THEME_KEY as KEY } from './theme-boot';
 const read = (): Theme =>
   typeof document !== 'undefined' && document.documentElement.classList.contains('dark') ? 'dark' : 'light';
 
-export function applyTheme(t: Theme) {
+// older iOS Safari tints its bars from this; Safari 26 reads the page instead (see theme-reveal)
+export function setThemeColorMeta(t: Theme) {
+  const metas = document.querySelectorAll('meta[name="theme-color"]');
+  metas.forEach((m) => m.setAttribute('content', t === 'dark' ? '#131315' : '#212225'));
+}
+
+// meta: false leaves theme-color for the caller to change in step with an animation
+export function applyTheme(t: Theme, { meta = true } = {}) {
   document.documentElement.classList.toggle('dark', t === 'dark');
   try {
     localStorage.setItem(KEY, t);
   } catch {}
-  const metas = document.querySelectorAll('meta[name="theme-color"]');
-  metas.forEach((m) => m.setAttribute('content', t === 'dark' ? '#131315' : '#212225'));
+  if (meta) setThemeColorMeta(t);
   window.dispatchEvent(new CustomEvent('theme', { detail: t }));
 }
 
