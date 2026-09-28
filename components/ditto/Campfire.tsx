@@ -222,10 +222,12 @@ export default function Campfire() {
     };
     // No flight when it can't read well: reduced motion, a fast scroll, or ends far apart.
     // Then it's an instant swap with a dust puff where it lands.
-    const skip = () => {
+    // Going up is the exception to the fast rule: the runner holds its line on screen and the
+    // take-off is frozen, so a quick hop reads fine; a swap there looked like a glitch.
+    const skip = (dir: 'down' | 'up' = 'down') => {
       const a = from();
       const b = to();
-      return reduce || fast() || !a || !b || Math.abs(a.y - b.y) > window.innerHeight * 1.5;
+      return reduce || (dir === 'down' && fast()) || !a || !b || Math.abs(a.y - b.y) > window.innerHeight * 1.5;
     };
     // The hand-off: the flyer is placed and shown on the source's spot first, and only then is
     // the source hidden, so there is never a frame with nobody on screen. Landing is the same in
@@ -235,14 +237,15 @@ export default function Campfire() {
       const src = dir === 'down' ? () => onScreen(from()) : () => onScreen(to());
       const dst = dir === 'down' ? to : from;
       const a = src();
-      if (!el || !a || skip()) {
+      if (!el || !a || skip(dir)) {
         hideSource();
         return false;
       }
       put(el, a);
       hideSource();
       try {
-        return dir === 'down' ? await hop(el, src, dst, 22, 0.8, fast) : await hop(el, src, dst, 44, 0.75, fast);
+        if (dir === 'down') return await hop(el, src, dst, 22, 0.8, fast);
+        return fast() ? await hop(el, src, dst, 30, 0.45, () => false) : await hop(el, src, dst, 44, 0.75, fast);
       } catch {
         return false; // never leave the runner stuck mid-air
       }
@@ -273,7 +276,7 @@ export default function Campfire() {
       busy = true;
       clearTimeout(swap);
       const look = railLook(getDuo().stage);
-      if (skip()) {
+      if (skip('up')) {
         setJoin(null);
         setDuo({ camp: 'rail' });
         const a = from();
@@ -281,7 +284,8 @@ export default function Campfire() {
       } else {
         if (getDuo().stage !== 'off' && look !== 'ditto') {
           setJoin(look); // back into the disguise before it jumps
-          await wait(180);
+          // on a fast scroll the pause let the fire leave the screen, and the hop was lost
+          if (!fast()) await wait(180);
         }
         const flew = await fly1(look, 'up', () => { setDuo({ camp: 'flying' }); setJoin(null); });
         if (!alive) return;
