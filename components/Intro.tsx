@@ -1,5 +1,6 @@
 import NowPlaying from './NowPlaying';
 import ThunderCharge from './name-fx/ThunderCharge';
+import IntroGlow from './IntroGlow';
 
 type Social = { name: string; url: string; icon: React.ReactNode };
 
@@ -64,9 +65,11 @@ const notes = [
 
 export default function Intro() {
   return (
-    <section className="sticky top-0 z-0 h-screen h-svh overflow-hidden bg-shell">
+    <section data-intro className="sticky top-0 z-0 h-screen h-svh overflow-hidden bg-shell">
       {/* the panel that sweeps up with an arc top, then flattens */}
-      <div className="animate-arc absolute inset-0 bg-charcoal" />
+      <div className="animate-arc absolute inset-0 overflow-hidden bg-charcoal">
+        <IntroGlow />
+      </div>
 
       <div className="relative flex h-full flex-col px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-12 sm:py-10">
         <div className="flex flex-1 flex-col justify-center">

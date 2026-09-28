@@ -55,6 +55,12 @@
 }
 
 @layer utilities {
+  /* Intro glow (IntroGlow): dark mode deepens the charcoal and flickers; light has a warm glow. */
+  .dark [data-intro] { --charcoal: 19 19 21; }
+  .dark .intro-light, html:not(.dark) .intro-dark { display: none; }
+  @keyframes intro-flicker { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .16; } 92% { opacity: 0; } 93.5% { opacity: .1; } 95% { opacity: 0; } }
+  .intro-flicker { opacity: 0; animation: intro-flicker 7s linear 2.4s infinite; }
+
   /* Intro: panel sweeps up from below with a convex arc top that flattens out. */
   @keyframes arc-rise {
     0% {
@@ -189,6 +195,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .animate-arc,
+    .intro-flicker,
     .animate-intro-fade,
     .animate-spin-record,
     .animate-bar,
