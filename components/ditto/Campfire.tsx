@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Pikachu, { type PikaFacing } from '../Pikachu';
 import { DittoPika, DittoSprite } from './Ditto';
+import { DANCE_CSS, danceStep, useBeat } from './dance';
 import { getDuo, setDuo, useDuo, type DittoStage } from '@/lib/duo';
 
 // The footer campfire: the site's pixel sprites sitting round a pixel fire, right under the end
@@ -185,7 +186,17 @@ export default function Campfire() {
   const [flare, setFlare] = useState(false);
   const [welcome, setWelcome] = useState(0); // >0: both turn to face you and hop (the footer asks)
   const box = useRef<HTMLDivElement>(null);
-  const { stage } = useDuo();
+  const { stage, music } = useDuo();
+  // while music plays they dance (dance.ts); a welcome from the footer takes over for its hop
+  const beat = useBeat(music);
+  const step = welcome ? null : danceStep(beat);
+  const [beatFlare, setBeatFlare] = useState(false);
+  useEffect(() => {
+    if (!step?.flare) return;
+    setBeatFlare(true);
+    const t = setTimeout(() => setBeatFlare(false), 200);
+    return () => clearTimeout(t);
+  }, [beat, step?.flare]);
   const imposter = stage !== 'off';
   const runnerWho: Who = imposter ? 'ditto' : 'pika';
   const waiterWho: Who = imposter ? 'pika' : 'ditto';
@@ -390,9 +401,11 @@ export default function Campfire() {
     else setDtap((d) => d + 1);
     setOpen(pos);
   };
+  const danceFacing = (side: PikaFacing) => (step ? (side === 'right' ? step.left : step.right) : side);
   const character = (who: Who, side: PikaFacing) => {
-    const facing = welcome ? 'down' : side;
-    return who === 'pika' ? <Pikachu walking={false} facing={facing} /> : copying ? <DittoPika facing={facing} /> : <DittoSprite facing={facing} />;
+    const facing = welcome ? 'down' : danceFacing(side);
+    const walking = !!step?.walking;
+    return who === 'pika' ? <Pikachu walking={walking} facing={facing} /> : copying ? <DittoPika facing={facing} walking={walking} /> : <DittoSprite facing={facing} walking={walking} />;
   };
 
   return (
@@ -423,6 +436,7 @@ export default function Campfire() {
         @keyframes duo-hi { 0%, 100% { transform: none; } 35% { transform: translateY(-9px); } 60% { transform: translateY(0) scale(1.08, 0.92); } }
         .duo-hi { animation: duo-hi 420ms ease-out; }
         @media (prefers-reduced-motion: reduce) { .duo-hi { animation: none; } }
+        ${DANCE_CSS}
       `}</style>
       <div
         ref={row}
@@ -432,16 +446,20 @@ export default function Campfire() {
         <button type="button" aria-label={runnerWho === 'pika' ? 'Pikachu' : 'Ditto'} data-seat="left" disabled={!join} onClick={(e) => tap(runnerWho, e.currentTarget)} className="cursor-pointer transition-transform hover:-translate-y-0.5 disabled:cursor-default">
           <span ref={seat} key={`hi${welcome}`} className={`block ${join ? '' : 'invisible'} ${welcome ? 'duo-hi' : ''}`}>
             <span key={imposter ? join ?? '' : ''} className="duo-swap block">
-              {imposter && join && join !== 'ditto' ? <Sprite look={join} facing="right" /> : character(runnerWho, 'right')}
+              <span key={step?.key} className={`block ${step?.lc ?? ''}`}>
+                {imposter && join && join !== 'ditto' ? <Sprite look={join} facing={danceFacing('right')} walking={!!step?.walking} /> : character(runnerWho, 'right')}
+              </span>
             </span>
           </span>
         </button>
         <button type="button" aria-label="Campfire" onClick={() => { setFlare(true); setTimeout(() => setFlare(false), 400); }} className="mb-2">
-          <PixelFire flare={flare} />
+          <PixelFire flare={flare || beatFlare} />
         </button>
         {/* right seat: the one who waits */}
         <button type="button" aria-label={waiterWho === 'pika' ? 'Pikachu' : 'Ditto'} data-seat="right" onClick={(e) => tap(waiterWho, e.currentTarget)} className="cursor-pointer transition-transform hover:-translate-y-0.5">
-          <span key={`hi${welcome}`} className={`block ${welcome ? 'duo-hi' : ''}`}>{character(waiterWho, 'left')}</span>
+          <span key={`hi${welcome}`} className={`block ${welcome ? 'duo-hi' : ''}`}>
+            <span key={step?.key} className={`block ${step?.rc ?? ''}`}>{character(waiterWho, 'left')}</span>
+          </span>
         </button>
       </div>
       {fly &&
