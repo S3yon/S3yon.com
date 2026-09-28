@@ -71,7 +71,7 @@ export default function Intro() {
         <IntroGlow />
       </div>
 
-      <div className="relative flex h-full flex-col px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-12 sm:py-10">
+      <div data-intro-inner className="relative flex h-full flex-col px-6 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-12 sm:py-10">
         <div className="flex flex-1 flex-col justify-center">
           {/* Thunder charge: a bolt arcs from the cursor to the nearest letter; tap to strike */}
           <ThunderCharge

@@ -61,6 +61,10 @@
   @keyframes intro-flicker { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .16; } 92% { opacity: 0; } 93.5% { opacity: .1; } 95% { opacity: 0; } }
   .intro-flicker { opacity: 0; animation: intro-flicker 7s linear 2.4s infinite; }
 
+  /* Intro parallax (IntroParallax sets --p as the timeline panel rises): drift up, fade out. */
+  [data-intro] { --p: 0; }
+  [data-intro-inner] { transform: translateY(calc(-33vh * var(--p))); opacity: calc(1 - 0.9 * var(--p)); will-change: transform, opacity; }
+
   /* Intro: panel sweeps up from below with a convex arc top that flattens out. */
   @keyframes arc-rise {
     0% {
@@ -207,5 +211,6 @@
     .pika {
       animation: none !important;
     }
+    [data-intro-inner] { transform: none; opacity: 1; }
   }
 }
