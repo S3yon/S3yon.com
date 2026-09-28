@@ -19,7 +19,7 @@ export default async function Home() {
       <DockSwitch />
 
       {/* content panel rides up over the intro as you scroll */}
-      <div id="work" className="relative z-10 rounded-t-[28px] bg-paper shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.55)] sm:rounded-t-[40px]">
+      <div id="work" className="relative z-10 overflow-x-clip rounded-t-[28px] bg-paper shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.55)] sm:rounded-t-[40px]">
         <main className="mx-auto max-w-4xl px-5 py-20 pb-[max(5rem,calc(env(safe-area-inset-bottom,0px)+3rem))] sm:px-8 sm:py-28 sm:pb-[max(7rem,calc(env(safe-area-inset-bottom,0px)+4rem))]">
           <Feed github={github} />
 
