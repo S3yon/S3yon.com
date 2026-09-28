@@ -76,11 +76,15 @@ export function DockSwitch() {
       tabIndex={stuck ? 0 : -1}
       onClick={(e) => flip(e.currentTarget)}
       aria-label={label(theme === 'dark')}
-      className={`dock-switch group fixed z-40 grid h-10 w-10 place-items-center rounded-full border border-rule bg-paper text-ink/70 transition-[opacity,transform,border-color] duration-300 hover:border-ink/30 hover:text-ink ${
+      className={`dock-switch group fixed z-40 flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-rule bg-paper/90 text-ink/70 backdrop-blur-md transition-[opacity,transform,border-color,color] duration-300 hover:border-ink/30 hover:text-ink lg:h-8 lg:w-8 xl:w-auto xl:pl-2.5 xl:pr-3.5 ${
         stuck ? 'scale-100 opacity-100' : 'pointer-events-none scale-50 opacity-0'
       }`}
     >
-      <Bolt dark={theme === 'dark'} size={17} />
+      <Bolt dark={theme === 'dark'} size={15} />
+      {/* wide screens have room beside the bar for a label, in the tabs' micro-label style */}
+      <span aria-hidden className="hidden whitespace-nowrap font-heading text-[10.5px] font-bold uppercase tracking-[0.16em] xl:inline">
+        {theme === 'dark' ? 'Lights on' : 'Lights off'}
+      </span>
     </button>
   );
 }

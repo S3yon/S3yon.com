@@ -62,14 +62,17 @@
   @keyframes intro-flicker { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .16; } 92% { opacity: 0; } 93.5% { opacity: .1; } 95% { opacity: 0; } }
   .intro-flicker { opacity: 0; animation: intro-flicker 7s linear 2.4s infinite; }
 
-  /* DockSwitch: pinned to the right end of the filter bar; outside max-w-4xl at lg */
+  /* DockSwitch: pinned to the right end of the filter bar. From lg it sits just past the bar's
+     right edge (the column is max-w-4xl, the bar bleeds 32px), centred on the tab labels' line. */
   .dock-switch {
     top: max(5px, calc(env(safe-area-inset-top, 0px) + 5px));
     right: max(14px, env(safe-area-inset-right, 0px));
   }
   @media (min-width: 1024px) {
     .dock-switch {
-      right: max(14px, calc(50vw - 500px));
+      top: 13px;
+      right: auto;
+      left: calc(50% + 460px);
     }
   }
 
