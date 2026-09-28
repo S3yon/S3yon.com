@@ -8,8 +8,6 @@ import {
   useAnimate,
   useMotionValueEvent,
   useScroll,
-  useSpring,
-  useTransform,
   useVelocity,
 } from 'motion/react';
 import Reveal from './Reveal';
@@ -40,8 +38,6 @@ const entryKey = (e: FeedEntry) => `${e.year}-${e.month}-${e.title}`;
 // The rail beam's head sits on this viewport line, and each entry reveals when its marker
 // crosses the same line, so the runner arrives exactly as the entry appears.
 const LINE = 0.7;
-// Most the runner may trail the line on a fast scroll, in px.
-const LAG = 56;
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 // Entries already revealed once. A filter change re-mounts them; they must not animate again.
@@ -303,20 +299,6 @@ function Rail({
   const trackRef = useRef<HTMLDivElement>(null);
   const [hopScope, animateHop] = useAnimate();
   const { scrollY } = useScroll();
-  const { scrollYProgress } = useScroll({
-    target: trackRef,
-    offset: [`start ${LINE * 100}%`, `end ${LINE * 100}%`],
-  });
-  const spring = useSpring(scrollYProgress, { stiffness: 320, damping: 36, restDelta: 0.0005 });
-  // The spring smooths slow scrolling. At the rail ends (raw >= 0.98 or <= 0.02) it locks to raw
-  // with zero lag, ensuring seamless hand-offs with the campfire.
-  const trackH = useRef(1);
-  const progress = useTransform([scrollYProgress, spring], ([raw, s]: number[]) => {
-    if (raw >= 0.98 || raw <= 0.02) return raw;
-    const cap = 28 / trackH.current;
-    return Math.min(raw + cap, Math.max(raw - cap, s));
-  });
-  const height = useTransform(progress, (v) => `${(v * 100).toFixed(2)}%`);
   const velocity = useVelocity(scrollY);
   const away = useDuo().camp !== 'rail';
 
@@ -453,12 +435,8 @@ function Rail({
       settle = window.setTimeout(tryGreet, 220);
     };
     window.addEventListener('scroll', greet, { passive: true });
-    const track = trackRef.current;
-    const ro = new ResizeObserver(() => { trackH.current = Math.max(1, track?.offsetHeight ?? 1); });
-    if (track) ro.observe(track);
     const t = timers.current;
     return () => {
-      ro.disconnect();
       window.removeEventListener('timeline:reveal', onReveal);
       window.removeEventListener('scroll', greet);
       window.clearTimeout(settle);
@@ -475,15 +453,17 @@ function Rail({
       className={`pointer-events-none absolute bottom-10 left-0 w-9 ${startsAtRow ? 'top-[18px]' : 'top-[22px] sm:top-[28px]'}`}
     >
       <span aria-hidden className="absolute inset-y-0 left-[17px] w-px bg-rule" />
-      <motion.span
-        aria-hidden
-        style={{ height }}
-        className="absolute left-[16.5px] top-0 w-[2px] rounded-full bg-gradient-to-b from-accent/0 via-accent/60 to-accent"
-      />
-      <motion.div
-        style={{ top: height }}
-        className="absolute left-1/2 z-20 -translate-x-1/2 -translate-y-[62%]"
-      >
+      {/* The fill and the runner are position: sticky on the LINE viewport line, clamped to the
+          track, so the browser moves them with the scroll itself: no per-frame script, no lag on
+          a phone's momentum scroll. The fill is a long tail above the runner, clipped to the
+          track and faded in over its first stretch. */}
+      <span aria-hidden className="absolute inset-0 overflow-clip [mask-image:linear-gradient(to_bottom,transparent,black_200px)]">
+        <span className="sticky top-[70%] block h-0">
+          <span className="absolute bottom-0 left-[16.5px] h-[150vh] w-[2px] rounded-full bg-gradient-to-b from-accent/0 via-accent/60 to-accent" />
+        </span>
+      </span>
+      <div className="sticky top-[70%] z-20 h-0">
+        <div className="absolute left-1/2 -translate-x-1/2 -translate-y-[62%]">
         <div ref={hopScope} data-rail-runner className={`relative ${away ? 'invisible' : ''}`}>
           <button
             type="button"
@@ -610,7 +590,8 @@ function Rail({
             )}
           </AnimatePresence>
         </div>
-      </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
