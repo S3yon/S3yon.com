@@ -23,7 +23,7 @@ export const feed: FeedEntry[] = [
   {
     year: 2026,
     month: 'September',
-    title: 'Get Into Gear Panel',
+    title: 'A Future Beyond Hackathons: Cross Collaboration in the Professional World',
     org: 'GDG Sheridan',
     logo: '/logos/gdgsheridan.png',
     orgUrl: 'https://www.gdgsheridan.com/',
