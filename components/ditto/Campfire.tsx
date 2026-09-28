@@ -335,7 +335,10 @@ export default function Campfire() {
       if (busy || !alive) return;
       const at = getDuo().camp;
       const reach = 64 * (spotOf(seat.current)?.s ?? 1) + 120;
-      if (at === 'rail' && seen > 0 && gap() < reach && way >= 0) down();
+      // at the very bottom of the page it always goes: a phone's bounce or toolbar can leave the
+      // last scroll step pointing up, which used to strand the runner on the rail
+      const bottom = scrollPos() >= document.documentElement.scrollHeight - window.innerHeight - 4;
+      if (at === 'rail' && seen > 0 && (bottom || (gap() < reach && way >= 0))) down();
       else if (at === 'camp' && climbed > 24) up();
     };
     let raf = 0;
@@ -367,6 +370,7 @@ export default function Campfire() {
       settle();
     };
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', settle);
     const io = new IntersectionObserver(([e]) => { seen = e.intersectionRatio; onScroll(); }, { threshold: [0, 0.2, 0.6, 1] });
     if (row.current) io.observe(row.current);
     return () => {
@@ -375,6 +379,7 @@ export default function Campfire() {
       cancelAnimationFrame(raf);
       clearTimeout(swap);
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', settle);
       setDuo({ camp: 'rail' });
     };
   }, []);
