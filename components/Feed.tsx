@@ -846,6 +846,8 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
     window.addEventListener('site-music', on);
     return () => window.removeEventListener('site-music', on);
   }, []);
+  const music = siteMusic ?? (spotify?.isPlaying ? spotify.title ?? null : null);
+  useEffect(() => setDuo({ music: !!music }), [music]);
   const [ditto, setDitto] = useState<DittoStage>('off');
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has('ditto') || Math.random() < 0.1) setDitto('pika');
@@ -896,7 +898,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
           >
             <Rail
               startsAtRow={filter === 'all'}
-              music={siteMusic ?? (spotify?.isPlaying ? spotify.title ?? null : null)}
+              music={music}
               ditto={ditto}
               setDitto={setDitto}
             />
