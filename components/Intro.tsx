@@ -66,7 +66,7 @@ const notes = [
 
 export default function Intro() {
   return (
-    <section data-intro className="sticky top-0 z-0 h-screen h-[100dvh] overflow-hidden bg-charcoal">
+    <section data-intro className="sticky top-0 z-0 h-screen h-[100dvh] overflow-hidden bg-shell">
       {/* the panel that sweeps up with an arc top, then flattens */}
       <div className="animate-arc absolute inset-0 overflow-hidden bg-charcoal">
         <IntroGlow />
