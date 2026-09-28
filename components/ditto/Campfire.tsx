@@ -79,8 +79,11 @@ function spotOf(el: Element | null | undefined): Spot | null {
   const r = el.getBoundingClientRect();
   return { x: r.left + r.width / 2, y: r.bottom, s: r.height / 64 };
 }
-// Keep a start point inside the viewport, so a hop never begins off screen.
-const onScreen = (p: Spot | null): Spot | null => (p ? { ...p, y: Math.min(p.y, window.innerHeight - 6) } : null);
+// Keep a start point inside the viewport and below the sticky filter bar, so a hop never begins
+// off screen or tucked under the bar.
+const barBottom = () => document.querySelector('nav[aria-label="Filter timeline"]')?.parentElement?.getBoundingClientRect().bottom ?? 0;
+const onScreen = (p: Spot | null): Spot | null =>
+  p ? { ...p, y: clamp(p.y, Math.max(0, barBottom()) + 64 * p.s + 6, window.innerHeight - 6) } : null;
 
 // Place the flyer (position: fixed, so scrolling never drags it): bottom-centre on p, squashed by sx/sy.
 function put(el: HTMLElement, p: Spot, sx = 1, sy = 1) {
@@ -229,7 +232,7 @@ export default function Campfire() {
     // reverse: the destination shows, then the flyer goes a frame later.
     const fly1 = async (look: Look, dir: 'down' | 'up', hideSource: () => void) => {
       const el = await show(look, dir);
-      const src = dir === 'down' ? from : () => onScreen(to());
+      const src = dir === 'down' ? () => onScreen(from()) : () => onScreen(to());
       const dst = dir === 'down' ? to : from;
       const a = src();
       if (!el || !a || skip()) {
