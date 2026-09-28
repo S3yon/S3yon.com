@@ -2,10 +2,10 @@ import { useSyncExternalStore } from 'react';
 
 // Shared state between the rail runner (Feed) and the footer campfire.
 // `stage` is who is really on the rail: 'off' = Pikachu, anything else = Ditto (Imposter).
-// `camp` is where the runner is: on the rail, mid-jump, or sitting at the fire.
+// `camp` is where the runner is: on the rail, or at its end, sitting at the fire.
 // `music` is true while a song plays (the site's crate or Seyon's Spotify): they dance at the fire.
 export type DittoStage = 'off' | 'pika' | 'blob' | 'copy';
-export type CampSpot = 'rail' | 'flying' | 'camp';
+export type CampSpot = 'rail' | 'camp';
 type Duo = { stage: DittoStage; camp: CampSpot; music: boolean };
 
 let state: Duo = { stage: 'off', camp: 'rail', music: false };

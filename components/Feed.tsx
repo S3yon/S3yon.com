@@ -13,7 +13,7 @@ import {
 import Reveal from './Reveal';
 import Pikachu, { type PikaFacing } from './Pikachu';
 import { DittoSprite, DittoPika } from './ditto/Ditto';
-import { setDuo, useDuo, type DittoStage } from '@/lib/duo';
+import { getDuo, setDuo, useDuo, type DittoStage } from '@/lib/duo';
 import { useInViewOnce, type ViewState } from '@/lib/use-in-view-once';
 import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
 import type { GithubStats } from '@/lib/github';
@@ -280,7 +280,8 @@ type Bubble = { id: number } & BubbleBody;
 
 // One continuous rail for the whole feed: a hairline, an accent fill that tracks scroll, and
 // Pikachu walking at the head of the fill (pinned to the LINE viewport line). It never fades:
-// before the first entry it waits at the top, after the last it waits at the bottom.
+// before the first entry it waits at the top. The rail runs on past the last entry to the footer
+// campfire and ends on the left seat, so the runner walks straight into its seat.
 //
 // Personality, all driven by what the reader does:
 //  - walks while scrolling, faster on a fast scroll; front view going down, back view going up
@@ -291,8 +292,8 @@ type Bubble = { id: number } & BubbleBody;
 //    and one of its tap lines is the song
 //  - sometimes it's Ditto (see DittoStage): the second tap slips ("Pika… Ditto?"), the third
 //    melts the disguise, and it walks the rest of the visit as a lavender copy
-//  - when the footer campfire scrolls into view it jumps off the rail to sit there (see
-//    ditto/Campfire.tsx); the runner here is hidden until it jumps back
+//  - at the end of the rail it is on the campfire's left seat: the seated sprite takes over on
+//    the same spot (ditto/Campfire.tsx) and hands back the moment the runner moves up again
 function Rail({
   startsAtRow = false,
   music = null,
@@ -305,6 +306,8 @@ function Rail({
   setDitto?: (s: DittoStage) => void;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
   const [hopScope, animateHop] = useAnimate();
   const { scrollY } = useScroll();
   const velocity = useVelocity(scrollY);
@@ -417,6 +420,54 @@ function Rail({
     }, 180);
   });
 
+  // The track's bottom is set so the runner, pinned at the track's end, stands exactly on the
+  // campfire's left seat. It is at camp while pinned there, on the rail otherwise: pure layout,
+  // read on every scroll, so a fling or a phone's bounce can't strand it.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const seatRow = () => document.querySelector('[data-seat-row]');
+    const align = () => {
+      const row = seatRow();
+      const a = anchorRef.current;
+      const b = boxRef.current;
+      const parent = track.offsetParent;
+      if (!row || !a || !b || !parent) return;
+      const drop = b.getBoundingClientRect().bottom - a.getBoundingClientRect().top;
+      const end = row.getBoundingClientRect().bottom - drop;
+      track.style.bottom = `${(parent.getBoundingClientRect().bottom - end).toFixed(1)}px`;
+    };
+    const dock = () => {
+      const a = anchorRef.current;
+      if (!a) return;
+      const at = a.getBoundingClientRect().top >= track.getBoundingClientRect().bottom - 1 ? 'camp' : 'rail';
+      if (getDuo().camp !== at) setDuo({ camp: at });
+    };
+    const refit = () => {
+      align();
+      dock();
+    };
+    // keep measuring while the list's fade-in slide (a filter change) settles
+    const until = performance.now() + 800;
+    let raf = 0;
+    const settle = () => {
+      refit();
+      if (performance.now() < until) raf = requestAnimationFrame(settle);
+    };
+    settle();
+    const ro = new ResizeObserver(refit);
+    ro.observe(document.body);
+    window.addEventListener('scroll', dock, { passive: true });
+    window.addEventListener('resize', refit);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener('scroll', dock);
+      window.removeEventListener('resize', refit);
+      setDuo({ camp: 'rail' });
+    };
+  }, []);
+
   // an Imposter visit: fetch Ditto's portraits ahead of the unmasking
   useEffect(() => {
     if (ditto === 'off') return;
@@ -491,8 +542,8 @@ function Rail({
           <span className="absolute bottom-0 left-[16.5px] h-[150vh] w-[2px] rounded-full bg-gradient-to-b from-accent/0 via-accent/60 to-accent" />
         </span>
       </span>
-      <div className="sticky top-[70%] z-20 h-0">
-        <div className="absolute left-1/2 -translate-x-1/2 -translate-y-[62%]">
+      <div ref={anchorRef} className="sticky top-[70%] z-20 h-0">
+        <div ref={boxRef} className="absolute left-1/2 -translate-x-1/2 -translate-y-[62%]">
         <div ref={hopScope} data-rail-runner className={`relative ${away ? 'invisible' : ''}`}>
           <button
             type="button"
