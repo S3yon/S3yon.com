@@ -11,9 +11,10 @@ const config: Config = {
     extend: {
       colors: {
         // intro world — charcoal panel on a warm grey shell, chalk-grey type
-        shell: '#C9C8C4',
-        charcoal: '#212225',
-        chalk: '#C8C7C3',
+        // CSS variables (globals.css) so an intro look can re-colour its own section
+        shell: 'rgb(var(--shell) / <alpha-value>)',
+        charcoal: 'rgb(var(--charcoal) / <alpha-value>)',
+        chalk: 'rgb(var(--chalk) / <alpha-value>)',
         // content world
         // content world: themed via CSS variables (light + dark in globals.css)
         paper: 'rgb(var(--paper) / <alpha-value>)',

@@ -11,6 +11,10 @@
     --faint: 147 147 143;
     --rule: 222 220 215;
     --accent: 180 80 42;
+    /* intro world: the same in both themes unless an intro look overrides them */
+    --shell: 201 200 196;
+    --charcoal: 33 34 37;
+    --chalk: 200 199 195;
   }
 
   /* Dark: the paper panel goes charcoal-black, type goes chalk, rust brightens a touch. */
@@ -25,7 +29,7 @@
 
   html {
     color-scheme: light;
-    background: theme('colors.shell');
+    background: rgb(var(--shell));
   }
 
   html.dark {

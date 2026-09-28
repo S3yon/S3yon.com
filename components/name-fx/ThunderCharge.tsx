@@ -161,13 +161,15 @@ export default function ThunderCharge({
         until = now + 380;
         start();
       }
+      // the letters' resting colour, read live so it follows the intro's look and theme
+      const rest = name.current ? getComputedStyle(name.current).color : '#C8C7C3';
       letters.forEach((l, i) => {
         l.animate(
           [
-            { color: '#C8C7C3', textShadow: '0 0 0 rgba(246,206,58,0)' },
+            { color: rest, textShadow: '0 0 0 rgba(246,206,58,0)' },
             { color: '#F6CE3A', textShadow: '0 0 26px rgba(246,206,58,0.85)', offset: 0.25 },
             { color: '#F6CE3A', textShadow: '0 0 14px rgba(246,206,58,0.5)', offset: 0.55 },
-            { color: '#C8C7C3', textShadow: '0 0 0 rgba(246,206,58,0)' },
+            { color: rest, textShadow: '0 0 0 rgba(246,206,58,0)' },
           ],
           { duration: 900, delay: 80 + i * 45, easing: 'ease-out' }
         );
