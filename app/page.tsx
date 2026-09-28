@@ -32,7 +32,7 @@ export default async function Home() {
               </div>
               <Reveal>
                 <h2 className="font-heading text-[clamp(34px,8vw,52px)] font-extrabold leading-[0.95] tracking-[-0.03em]">
-                  Pull up a log.
+                  Have a seat by the fire.
                   <br />
                   <span className="text-accent">Let&apos;s build something.</span>
                 </h2>
