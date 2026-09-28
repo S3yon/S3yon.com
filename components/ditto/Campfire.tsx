@@ -183,7 +183,7 @@ export default function Campfire() {
         @keyframes duo-hi { 0%, 100% { transform: none; } 35% { transform: translateY(-9px); } 60% { transform: translateY(0) scale(1.08, 0.92); } }
         .duo-hi { animation: duo-hi 420ms ease-out; }
         @keyframes duo-sit { from { transform: scale(0.667); } to { transform: none; } }
-        @media (min-width: 640px) { .duo-sit { animation: duo-sit 200ms ease-out; transform-origin: 50% 100%; } }
+        @media (min-width: 640px) { .duo-sit { animation: duo-sit 200ms ease-out backwards; transform-origin: 50% 100%; } }
         @media (prefers-reduced-motion: reduce) { .duo-hi, .duo-sit { animation: none; } }
         ${DANCE_CSS}
       `}</style>

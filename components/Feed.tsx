@@ -312,6 +312,15 @@ function Rail({
   const { scrollY } = useScroll();
   const velocity = useVelocity(scrollY);
   const away = useDuo().camp !== 'rail';
+  // counts each stand-up from the seat: the desktop seat is 1.5x, so the runner shrinks back
+  // from that size instead of popping (the reverse of the seat's grow, Campfire.tsx)
+  // (set during render, so the first frame back on the rail is already the big one)
+  const [stood, setStood] = useState(0);
+  const [wasAway, setWasAway] = useState(away);
+  if (wasAway !== away) {
+    setWasAway(away);
+    if (!away) setStood(stood + 1);
+  }
 
   const [walking, setWalking] = useState(false);
   const [fast, setFast] = useState(false);
@@ -556,6 +565,7 @@ function Rail({
             className="pointer-events-auto block cursor-pointer"
           >
             {/* while music plays and it's standing still, it bobs to the beat */}
+            <span key={stood} className={`block ${stood ? 'rail-stand' : ''}`}>
             <span className={`block ${music && !walking ? 'animate-[vibe_0.5s_ease-in-out_infinite]' : ''}`}>
               {ditto === 'off' || ditto === 'pika' ? (
                 <Pikachu walking={walking} fast={fast} facing={facing} />
@@ -577,6 +587,7 @@ function Rail({
                   </motion.span>
                 </AnimatePresence>
               )}
+            </span>
             </span>
           </button>
           {music && !walking && (
