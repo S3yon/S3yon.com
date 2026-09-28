@@ -40,6 +40,8 @@ const entryKey = (e: FeedEntry) => `${e.year}-${e.month}-${e.title}`;
 // The rail beam's head sits on this viewport line, and each entry reveals when its marker
 // crosses the same line, so the runner arrives exactly as the entry appears.
 const LINE = 0.7;
+// Most the runner may trail the line on a fast scroll, in px.
+const LAG = 56;
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 // Entries already revealed once. A filter change re-mounts them; they must not animate again.
@@ -305,7 +307,14 @@ function Rail({
     target: trackRef,
     offset: [`start ${LINE * 100}%`, `end ${LINE * 100}%`],
   });
-  const progress = useSpring(scrollYProgress, { stiffness: 260, damping: 34, restDelta: 0.0005 });
+  const spring = useSpring(scrollYProgress, { stiffness: 260, damping: 34, restDelta: 0.0005 });
+  // The spring smooths slow scrolling, but on a fast fling it fell thousands of px behind and the
+  // runner slid off the line, up under the filter bar. Its lag is capped at LAG px either way.
+  const trackH = useRef(1);
+  const progress = useTransform([scrollYProgress, spring], ([raw, s]: number[]) => {
+    const cap = LAG / trackH.current;
+    return Math.min(raw + cap, Math.max(raw - cap, s));
+  });
   const height = useTransform(progress, (v) => `${(v * 100).toFixed(2)}%`);
   const velocity = useVelocity(scrollY);
   const away = useDuo().camp !== 'rail';
@@ -441,8 +450,12 @@ function Rail({
       settle = window.setTimeout(tryGreet, 220);
     };
     window.addEventListener('scroll', greet, { passive: true });
+    const track = trackRef.current;
+    const ro = new ResizeObserver(() => { trackH.current = Math.max(1, track?.offsetHeight ?? 1); });
+    if (track) ro.observe(track);
     const t = timers.current;
     return () => {
+      ro.disconnect();
       window.removeEventListener('timeline:reveal', onReveal);
       window.removeEventListener('scroll', greet);
       window.clearTimeout(settle);
