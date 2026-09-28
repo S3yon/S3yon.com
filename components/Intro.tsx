@@ -1,6 +1,7 @@
 import NowPlaying from './NowPlaying';
 import ThunderCharge from './name-fx/ThunderCharge';
 import IntroGlow from './IntroGlow';
+import { PanelSwitch } from './ThunderSwitch';
 
 type Social = { name: string; url: string; icon: React.ReactNode };
 
@@ -140,6 +141,11 @@ export default function Intro() {
             <NowPlaying />
           </div>
         </div>
+      </div>
+
+      {/* the theme switch rides up with the panel, above the content so it can be tapped */}
+      <div className="animate-arc pointer-events-none absolute inset-0 z-10">
+        <PanelSwitch />
       </div>
     </section>
   );

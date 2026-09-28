@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { themeBootScript } from "@/lib/theme-boot";
-import ThunderSwitch from "@/components/ThunderSwitch";
 
 const display = Anton({
   subsets: ["latin"],
@@ -57,7 +56,6 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         {children}
-        <ThunderSwitch />
       </body>
     </html>
   );
