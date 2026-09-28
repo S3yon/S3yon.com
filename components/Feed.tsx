@@ -267,7 +267,15 @@ const LINES = ['Pika!', 'Pika pika!', 'Chu~', 'Pikachu!'];
 // 'pika' = disguised, 'blob' = the disguise has melted, 'copy' = walks on as a lavender Pikachu.
 const DITTO_LINES = ['Ditto!', 'Pika… to!', 'Dit-chu!'];
 
-type BubbleBody = { kind: 'mood'; mood: Mood } | { kind: 'text'; text: string };
+// Ditto's portraits: its own 12 moods (same order as Pikachu's) and 3 of it as the lavender copy.
+const DITTO_ART = {
+  ditto: { src: '/sprites/ditto-moods.webp', frames: MOODS.length, label: 'Ditto portrait' },
+  copy: { src: '/sprites/ditto-pika.webp', frames: 3, label: 'Ditto as Pikachu portrait' },
+} as const;
+type BubbleBody =
+  | { kind: 'mood'; mood: Mood }
+  | { kind: 'ditto'; art: keyof typeof DITTO_ART; frame: number }
+  | { kind: 'text'; text: string };
 type Bubble = { id: number } & BubbleBody;
 
 // One continuous rail for the whole feed: a hairline, an accent fill that tracks scroll, and
@@ -324,6 +332,11 @@ function Rail({
     sinceMood.current = 0;
     show({ kind: 'mood', mood }, ms);
   };
+  const dittoArt = useRef(0);
+  const dittoPortrait = (art: keyof typeof DITTO_ART, ms?: number) => {
+    sinceMood.current = 0;
+    show({ kind: 'ditto', art, frame: dittoArt.current++ % DITTO_ART[art].frames }, ms ?? 1900);
+  };
   const speak = (text: string) => {
     sinceMood.current += 1;
     show({ kind: 'text', text });
@@ -332,13 +345,23 @@ function Rail({
   // than three "Pika!" lines in a row. The rest are lines, cycling.
   const onTap = () => {
     taps.current += 1;
-    if (ditto === 'blob') return;
-    if (ditto === 'copy') return speak(DITTO_LINES[taps.current % DITTO_LINES.length]);
+    // once unmasked: its own portraits (Ditto while melted, the lavender copy after), with its
+    // lines in between, same rhythm as Pikachu's
+    if (ditto === 'blob') return dittoPortrait('ditto');
+    if (ditto === 'copy') {
+      if (sinceMood.current >= 2 || Math.random() < 0.4) return dittoPortrait('copy');
+      return speak(DITTO_LINES[taps.current % DITTO_LINES.length]);
+    }
     if (ditto === 'pika' && taps.current >= 2) {
       if (taps.current === 2) return speak('Pika… Ditto?');
+      // melts: "…Ditto.", then its portrait; re-forms as the copy with the copy's portrait
       setDitto?.('blob');
-      show({ kind: 'text', text: '…Ditto.' }, 1800);
-      window.setTimeout(() => setDitto?.('copy'), 2200);
+      show({ kind: 'text', text: '…Ditto.' }, 1100);
+      window.setTimeout(() => dittoPortrait('ditto', 1100), 1100);
+      window.setTimeout(() => {
+        setDitto?.('copy');
+        dittoPortrait('copy', 1800);
+      }, 2200);
       return;
     }
     const portrait = taps.current === 1 || sinceMood.current >= 3 || Math.random() < 0.3;
@@ -393,6 +416,12 @@ function Rail({
       scheduleIdle();
     }, 180);
   });
+
+  // an Imposter visit: fetch Ditto's portraits ahead of the unmasking
+  useEffect(() => {
+    if (ditto === 'off') return;
+    Object.values(DITTO_ART).forEach((a) => { new Image().src = a.src; });
+  }, [ditto]);
 
   useEffect(() => {
     const onReveal = (e: Event) => {
@@ -553,7 +582,7 @@ function Rail({
               <motion.span
                 key={bubble.id}
                 role="status"
-                aria-label={bubble.kind === 'mood' ? `Pikachu is ${MOOD_LABEL[bubble.mood]}` : bubble.text}
+                aria-label={bubble.kind === 'mood' ? `Pikachu is ${MOOD_LABEL[bubble.mood]}` : bubble.kind === 'ditto' ? DITTO_ART[bubble.art].label : bubble.text}
                 className="pointer-events-none absolute bottom-[calc(100%-10px)] left-0 block"
                 initial={{ opacity: 0, scale: 0.3, y: 14 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -561,18 +590,26 @@ function Rail({
                 transition={{ type: 'spring', stiffness: 460, damping: 22 }}
                 style={{ originX: '32px', originY: 1 }}
               >
-                {bubble.kind === 'mood' ? (
+                {bubble.kind !== 'text' ? (
                   <>
                     {/* frame echoes the art: navy double line on a yellow mat */}
                     <span className="block rounded-[8px] border-2 border-[#10061E] bg-[#F1C754] p-[4px] shadow-[0_10px_24px_-12px_rgba(0,0,0,0.5)]">
-                      <span className="block overflow-hidden rounded-[4px] border-[1.5px] border-[#10061E]">
+                      <span className="block overflow-hidden rounded-[4px] border-[1.5px] border-[#10061E] bg-[#EEECEC]">
                         <span
                           className="block h-[72px] w-[72px]"
-                          style={{
-                            backgroundImage: 'url(/sprites/pikachu-moods.webp)',
-                            backgroundSize: `${MOODS.length * 72}px 72px`,
-                            backgroundPositionX: `${-MOODS.indexOf(bubble.mood) * 72}px`,
-                          }}
+                          style={
+                            bubble.kind === 'mood'
+                              ? {
+                                  backgroundImage: 'url(/sprites/pikachu-moods.webp)',
+                                  backgroundSize: `${MOODS.length * 72}px 72px`,
+                                  backgroundPositionX: `${-MOODS.indexOf(bubble.mood) * 72}px`,
+                                }
+                              : {
+                                  backgroundImage: `url(${DITTO_ART[bubble.art].src})`,
+                                  backgroundSize: `${DITTO_ART[bubble.art].frames * 72}px 72px`,
+                                  backgroundPositionX: `${-bubble.frame * 72}px`,
+                                }
+                          }
                         />
                       </span>
                     </span>
