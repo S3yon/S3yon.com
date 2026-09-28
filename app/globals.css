@@ -72,6 +72,14 @@
     }
   }
 
+  /* Standalone PWA mode: ensures the intro covers the full physical display height */
+  @media (display-mode: standalone) {
+    [data-intro] {
+      height: 100dvh;
+      height: 100vh;
+    }
+  }
+
   /* Intro parallax: native compositor-driven animation for zero-lag 120fps motion */
   @keyframes intro-parallax-drift {
     from {
@@ -80,6 +88,7 @@
     }
     to {
       transform: translateY(-33vh);
+      transform: translateY(-33dvh);
       opacity: 0.1;
     }
   }
@@ -89,6 +98,7 @@
       animation: intro-parallax-drift linear both;
       animation-timeline: scroll(root);
       animation-range: 0 100vh;
+      animation-range: 0 100dvh;
       will-change: transform, opacity;
     }
   }
@@ -97,6 +107,7 @@
     [data-intro] { --p: 0; }
     [data-intro-inner] {
       transform: translateY(calc(-33vh * var(--p)));
+      transform: translateY(calc(-33dvh * var(--p)));
       opacity: calc(1 - 0.9 * var(--p));
       will-change: transform, opacity;
     }
