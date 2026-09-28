@@ -29,11 +29,12 @@
 
   html {
     color-scheme: light;
-    background: rgb(var(--shell));
+    background: rgb(var(--charcoal));
   }
 
   html.dark {
     color-scheme: dark;
+    --charcoal: 19 19 21;
   }
 
   /* theme switch circle reveal (View Transitions): the new page is clipped in by script */
@@ -44,7 +45,7 @@
   }
 
   body {
-    @apply bg-shell text-ink;
+    @apply bg-charcoal text-ink;
     overscroll-behavior: none;
   }
 
@@ -56,7 +57,7 @@
 
 @layer utilities {
   /* Intro glow (IntroGlow): dark mode deepens the charcoal and flickers; light has a warm glow. */
-  .dark [data-intro] { --charcoal: 19 19 21; }
+  .dark [data-intro], html.dark { --charcoal: 19 19 21; }
   .dark .intro-light, html:not(.dark) .intro-dark { display: none; }
   @keyframes intro-flicker { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .16; } 92% { opacity: 0; } 93.5% { opacity: .1; } 95% { opacity: 0; } }
   .intro-flicker { opacity: 0; animation: intro-flicker 7s linear 2.4s infinite; }

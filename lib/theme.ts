@@ -13,8 +13,8 @@ export function applyTheme(t: Theme) {
   try {
     localStorage.setItem(KEY, t);
   } catch {}
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', t === 'dark' ? '#161618' : '#212225');
+  const metas = document.querySelectorAll('meta[name="theme-color"]');
+  metas.forEach((m) => m.setAttribute('content', t === 'dark' ? '#131315' : '#212225'));
   window.dispatchEvent(new CustomEvent('theme', { detail: t }));
 }
 
