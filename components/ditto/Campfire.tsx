@@ -137,26 +137,34 @@ function puff(p: Spot) {
 }
 
 // One hop: crouch, a smooth curve with a little stretch in the air, squash and dust on landing.
-// The take-off spot is fixed once it crouches (it has left that spot, so it shouldn't slide
-// with it); the landing spot is re-read every frame, since the page and the rail's spring keep
-// moving it. If `rush` turns true in the crouch or the first part of the flight (a fast scroll),
-// it stops and returns false; the caller swaps it straight into place. Past that it finishes.
+// One hop: crouch, a smooth curve with a little stretch in the air, squash and dust on landing.
+// The take-off spot scrolls with the page so it never floats disconnected from the campfire or
+// rail; the landing spot is re-read every frame. If `rush` turns true (fast scroll), it cuts
+// straight to destination.
 async function hop(el: HTMLElement, from: () => Spot | null, to: () => Spot | null, lift: number, pace: number, rush: () => boolean) {
   const a = from();
   let b = to();
   if (!a || !b) return false;
-  if (!(await tween(0.1 * pace, (t) => put(el, a, 1 + 0.18 * t, 1 - 0.22 * t), 'easeOut', rush))) return false;
+  const startY = window.scrollY;
+  const getA = () => {
+    const dy = window.scrollY - startY;
+    return { ...a, y: a.y - dy };
+  };
+  if (!(await tween(0.06 * pace, (t) => put(el, getA(), 1 + 0.16 * t, 1 - 0.2 * t), 'easeOut', rush))) return false;
   const dist = Math.hypot(b.x - a.x, b.y - a.y);
-  let at = 0;
-  const flew = await tween(clamp(0.45 + dist / 1800, 0.5, 0.9) * pace, (t) => {
-    at = t;
-    b = to() ?? b!;
-    const k = Math.sin(t * Math.PI);
-    put(el, arc(a, b, t, lift), 1 - 0.08 * k, 1 + 0.1 * k);
-  }, 'easeInOut', () => at < 0.35 && rush());
+  const flew = await tween(
+    clamp(0.24 + dist / 2400, 0.26, 0.38) * pace,
+    (t) => {
+      b = to() ?? b!;
+      const k = Math.sin(t * Math.PI);
+      put(el, arc(getA(), b, t, lift), 1 - 0.08 * k, 1 + 0.1 * k);
+    },
+    'easeInOut',
+    rush,
+  );
   if (!flew) return false;
   puff(b);
-  await tween(0.18 * pace, (t) => { b = to() ?? b!; put(el, b, 1.22 - 0.22 * t, 0.78 + 0.22 * t); }, 'easeOut');
+  await tween(0.08 * pace, (t) => { b = to() ?? b!; put(el, b, 1.18 - 0.18 * t, 0.82 + 0.18 * t); }, 'easeOut');
   return true;
 }
 
@@ -218,7 +226,7 @@ export default function Campfire() {
     // Scroll speed in px/ms, smoothed; it counts as zero once scrolling has paused for 120ms.
     let speed = 0;
     let lastT = 0;
-    const fast = () => performance.now() - lastT < 120 && speed > 3;
+    const fast = () => performance.now() - lastT < 150 && speed > 0.75;
     // mount the flyer (starts at opacity 0) and return it once React has put it in the page
     const show = async (look: Look, facing: PikaFacing) => {
       setFly({ look, facing, walking: true });
@@ -232,18 +240,20 @@ export default function Campfire() {
       if (look !== 'ditto' && getDuo().stage !== 'off') swap = window.setTimeout(() => setJoin('ditto'), 450);
     };
     // No flight when it can't read well: reduced motion, a fast scroll, or ends far apart.
-    // Then it's an instant swap with a dust puff where it lands.
-    // Going up is the exception to the fast rule: the runner holds its line on screen and the
-    // take-off is frozen, so a quick hop reads fine; a swap there looked like a glitch.
+    // In those cases, instant swap with a dust puff where it lands.
     const skip = (dir: 'down' | 'up' = 'down') => {
       const a = from();
       const b = to();
-      return reduce || (dir === 'down' && fast()) || !a || !b || Math.abs(a.y - b.y) > window.innerHeight * 1.5;
+      return reduce || fast() || !a || !b || Math.abs(a.y - b.y) > window.innerHeight * 0.85;
     };
     // The hand-off: the flyer is placed and shown on the source's spot first, and only then is
-    // the source hidden, so there is never a frame with nobody on screen. Landing is the same in
-    // reverse: the destination shows, then the flyer goes a frame later.
+    // the source hidden, so there is never a frame with nobody on screen. Landing is atomic:
+    // the destination appears and the flyer disappears in the same commit.
     const fly1 = async (look: Look, dir: 'down' | 'up', hideSource: () => void) => {
+      if (skip(dir)) {
+        hideSource();
+        return false;
+      }
       const el = await show(look, dir);
       const src = dir === 'down' ? () => onScreen(from()) : () => onScreen(to());
       const dst = dir === 'down' ? to : from;
@@ -255,8 +265,8 @@ export default function Campfire() {
       put(el, a);
       hideSource();
       try {
-        if (dir === 'down') return await hop(el, src, dst, 22, 0.8, fast);
-        return fast() ? await hop(el, src, dst, 30, 0.45, () => false) : await hop(el, src, dst, 44, 0.75, fast);
+        const lift = dir === 'down' ? 18 : 26;
+        return await hop(el, src, dst, lift, 1.0, fast);
       } catch {
         return false; // never leave the runner stuck mid-air
       }
@@ -265,7 +275,7 @@ export default function Campfire() {
       busy = true;
       climbed = 0;
       const look = railLook(getDuo().stage);
-      if (skip()) {
+      if (skip('down')) {
         seatIn(look);
         setDuo({ camp: 'camp' });
         const b = to();
@@ -275,9 +285,7 @@ export default function Campfire() {
         if (!alive) return;
         if (!flew) { const b = to(); if (b && !reduce) puff(b); }
         seatIn(look);
-        await frame();
         setFly(null);
-        if (flew && look !== 'ditto' && getDuo().stage !== 'off') await wait(450);
         setDuo({ camp: 'camp' });
       }
       busy = false;
@@ -294,16 +302,13 @@ export default function Campfire() {
         if (a && !reduce) puff(a);
       } else {
         if (getDuo().stage !== 'off' && look !== 'ditto') {
-          setJoin(look); // back into the disguise before it jumps
-          // on a fast scroll the pause let the fire leave the screen, and the hop was lost
-          if (!fast()) await wait(180);
+          setJoin(look);
         }
         const flew = await fly1(look, 'up', () => { setDuo({ camp: 'flying' }); setJoin(null); });
         if (!alive) return;
         if (!flew) { const a = from(); if (a && !reduce) puff(a); }
-        setDuo({ camp: 'rail' });
-        await frame();
         setFly(null);
+        setDuo({ camp: 'rail' });
       }
       busy = false;
       settle();

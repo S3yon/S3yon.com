@@ -307,12 +307,13 @@ function Rail({
     target: trackRef,
     offset: [`start ${LINE * 100}%`, `end ${LINE * 100}%`],
   });
-  const spring = useSpring(scrollYProgress, { stiffness: 260, damping: 34, restDelta: 0.0005 });
-  // The spring smooths slow scrolling, but on a fast fling it fell thousands of px behind and the
-  // runner slid off the line, up under the filter bar. Its lag is capped at LAG px either way.
+  const spring = useSpring(scrollYProgress, { stiffness: 320, damping: 36, restDelta: 0.0005 });
+  // The spring smooths slow scrolling. At the rail ends (raw >= 0.98 or <= 0.02) it locks to raw
+  // with zero lag, ensuring seamless hand-offs with the campfire.
   const trackH = useRef(1);
   const progress = useTransform([scrollYProgress, spring], ([raw, s]: number[]) => {
-    const cap = LAG / trackH.current;
+    if (raw >= 0.98 || raw <= 0.02) return raw;
+    const cap = 28 / trackH.current;
     return Math.min(raw + cap, Math.max(raw - cap, s));
   });
   const height = useTransform(progress, (v) => `${(v * 100).toFixed(2)}%`);
@@ -413,6 +414,8 @@ function Rail({
 
   useEffect(() => {
     const onReveal = (e: Event) => {
+      // during fast scrolling, skip small reveal hops so running remains smooth and jitter-free
+      if (Math.abs(velocity.get()) > 400) return;
       const { award } = (e as CustomEvent<{ award: boolean }>).detail;
       if (award) {
         hop(16);
