@@ -27,7 +27,7 @@ function Bolt({ dark, size = 18 }: { dark: boolean; size?: number }) {
   );
 }
 
-// in the arc panel's corner; the Intro lays it above its content so it can be tapped
+// in the arc panel's corner; fades in with the name so it never flies up with the arc
 export function PanelSwitch() {
   const { theme } = useTheme();
   return (
@@ -35,8 +35,12 @@ export function PanelSwitch() {
       type="button"
       onClick={(e) => flip(e.currentTarget)}
       aria-label={label(theme === 'dark')}
-      style={{ top: 'max(14px, env(safe-area-inset-top))', right: 'max(14px, env(safe-area-inset-right))' }}
-      className="group pointer-events-auto absolute grid h-11 w-11 place-items-center rounded-full border border-chalk/20 text-chalk transition-colors hover:border-chalk/50"
+      style={{
+        top: 'max(14px, env(safe-area-inset-top))',
+        right: 'max(14px, env(safe-area-inset-right))',
+        animationDelay: '650ms',
+      }}
+      className="animate-intro-fade group pointer-events-auto absolute grid h-11 w-11 place-items-center rounded-full border border-chalk/20 text-chalk transition-colors hover:border-chalk/50"
     >
       <Bolt dark={theme === 'dark'} />
     </button>
@@ -45,24 +49,19 @@ export function PanelSwitch() {
 
 const filterBar = () => document.querySelector('nav[aria-label="Filter timeline"]')?.parentElement?.parentElement as HTMLElement | null;
 
-// shown only while the filter bar is stuck to the top. Below lg it sits in the room the bar keeps
-// free at its right end; at lg it sits just outside the column.
+// shown only while the filter bar is stuck to the top. Positioned by CSS (.dock-switch) on the
+// right side of the screen at all times, so it never teleports across the screen or glitches on load.
 export function DockSwitch() {
   const { theme } = useTheme();
-  const [pos, setPos] = useState<null | { top: number; left: number }>(null);
+  const [stuck, setStuck] = useState(false);
   useEffect(() => {
     let raf = 0;
     const read = () => {
       raf = 0;
       const b = filterBar();
-      if (!b) return setPos(null);
+      if (!b) return setStuck(false);
       const r = b.getBoundingClientRect();
-      if (r.top > 0.5) return setPos(null);
-      const size = 40;
-      const ir = (b.firstElementChild as HTMLElement).getBoundingClientRect(); // the ruled row, below the safe-area padding
-      const top = ir.top + (ir.height - size) / 2 - 1;
-      const left = window.innerWidth >= 1024 ? r.right + 12 : r.right - size - 12;
-      setPos({ top, left });
+      setStuck(r.top <= 0.5);
     };
     const on = () => { if (!raf) raf = requestAnimationFrame(read); };
     read();
@@ -73,13 +72,12 @@ export function DockSwitch() {
   return (
     <button
       type="button"
-      data-dock-switch={pos ? 'shown' : ''}
-      tabIndex={pos ? 0 : -1}
+      data-dock-switch={stuck ? 'shown' : ''}
+      tabIndex={stuck ? 0 : -1}
       onClick={(e) => flip(e.currentTarget)}
       aria-label={label(theme === 'dark')}
-      style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
-      className={`group fixed z-40 grid h-10 w-10 place-items-center rounded-full border border-rule bg-paper text-ink/70 transition-[opacity,transform,border-color] duration-300 hover:border-ink/30 hover:text-ink ${
-        pos ? 'scale-100 opacity-100' : 'pointer-events-none scale-50 opacity-0'
+      className={`dock-switch group fixed z-40 grid h-10 w-10 place-items-center rounded-full border border-rule bg-paper text-ink/70 transition-[opacity,transform,border-color] duration-300 hover:border-ink/30 hover:text-ink ${
+        stuck ? 'scale-100 opacity-100' : 'pointer-events-none scale-50 opacity-0'
       }`}
     >
       <Bolt dark={theme === 'dark'} size={17} />

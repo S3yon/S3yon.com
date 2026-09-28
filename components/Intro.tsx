@@ -143,8 +143,8 @@ export default function Intro() {
         </div>
       </div>
 
-      {/* the theme switch rides up with the panel, above the content so it can be tapped */}
-      <div className="animate-arc pointer-events-none absolute inset-0 z-10">
+      {/* the theme switch sits top-right and fades in with the intro name */}
+      <div className="pointer-events-none absolute inset-0 z-10">
         <PanelSwitch />
       </div>
     </section>
