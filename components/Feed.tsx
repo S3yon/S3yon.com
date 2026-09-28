@@ -538,11 +538,11 @@ function Rail({
           a phone's momentum scroll. The fill is a long tail above the runner, clipped to the
           track and faded in over its first stretch. */}
       <span aria-hidden className="absolute inset-0 overflow-clip [mask-image:linear-gradient(to_bottom,transparent,black_200px)]">
-        <span className="sticky top-[70%] block h-0">
+        <span className="sticky top-[70svh] block h-0">
           <span className="absolute bottom-0 left-[16.5px] h-[150vh] w-[2px] rounded-full bg-gradient-to-b from-accent/0 via-accent/60 to-accent" />
         </span>
       </span>
-      <div ref={anchorRef} className="sticky top-[70%] z-20 h-0">
+      <div ref={anchorRef} className="sticky top-[70svh] z-20 h-0">
         <div ref={boxRef} className="absolute left-1/2 -translate-x-1/2 -translate-y-[62%]">
         <div ref={hopScope} data-rail-runner className={`relative ${away ? 'invisible' : ''}`}>
           <button
