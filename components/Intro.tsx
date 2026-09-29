@@ -2,7 +2,6 @@ import NowPlaying from './NowPlaying';
 import ThunderCharge from './name-fx/ThunderCharge';
 import IntroGlow from './IntroGlow';
 import IntroFit from './IntroFit';
-import { PanelSwitch } from './ThunderSwitch';
 
 type Social = { name: string; url: string; icon: React.ReactNode };
 
@@ -149,11 +148,6 @@ export default function Intro() {
             <NowPlaying />
           </div>
         </div>
-      </div>
-
-      {/* the theme switch sits top-right and fades in with the intro name */}
-      <div className="pointer-events-none absolute inset-0 z-10">
-        <PanelSwitch />
       </div>
     </section>
   );
