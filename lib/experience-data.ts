@@ -92,7 +92,8 @@ export const feed: FeedEntry[] = [
     month: 'March',
     title: 'Outfitted',
     org: 'Hack Canada',
-    logo: '/logos/hackcanada.svg',
+    logo: '/logos/outfitted.png',
+    logoFill: true,
     orgUrl: 'https://hackcanada.org/',
     kind: 'project',
     description:
