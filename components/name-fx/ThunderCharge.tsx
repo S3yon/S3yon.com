@@ -6,6 +6,7 @@ import Letters, { letterEls, prefersReducedMotion } from './Letters';
 // Pikachu's move: when the pointer comes near the name, a jagged bolt arcs from the
 // pointer to the nearest letter, which jolts and glows yellow. A tap fires one strike.
 // The whole name also flashes yellow after the intro and when the reader flies back to the top.
+// Scrolling turns the cursor bolt off, so on desktop, as on a phone, the name only lights up then.
 export default function ThunderCharge({
   text,
   size,
@@ -184,6 +185,9 @@ export default function ThunderCharge({
     let lastT = performance.now();
     let upSpeed = 0;
     const onScroll = () => {
+      // the cursor bolt stays off while scrolling (the name slides under a still cursor);
+      // the next pointer move turns it back on
+      active = false;
       const now = performance.now();
       const y = window.scrollY;
       const v = (lastY - y) / Math.max(1, now - lastT);
