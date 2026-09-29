@@ -1,23 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { useTheme } from '@/lib/theme';
-import { switchWithCircle } from '@/lib/theme-reveal';
+import { switchTheme } from '@/lib/theme-reveal';
 
-// Dark mode toggle. Tap the bolt and the new theme floods out from it in a growing circle, like a
-// lightning flash lighting (or blacking out) the page. It lives in two places:
-//   PanelSwitch rides up with the intro's arc panel, top-right, and scrolls away with the intro.
-//   DockSwitch appears at the right end of the filter bar once the bar sticks to the top (just
-//   outside the column at lg), so it never sits over the timeline.
+// Dark mode toggle for the timeline (the intro keeps one look). ThemeBolt sits at the right end
+// of the fixed filter bar, which only shows once the inline bar has scrolled off the top.
 
 // read the live page, not state, so the switch can never go the wrong way
-const flip = (el: HTMLElement) => {
-  const r = el.getBoundingClientRect();
-  const isDark = document.documentElement.classList.contains('dark');
-  switchWithCircle(isDark ? 'light' : 'dark', r.left + r.width / 2, r.top + r.height / 2);
-};
-
-const label = (dark: boolean) => (dark ? 'Switch to light mode' : 'Switch to dark mode');
+const flip = () => switchTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
 
 function Bolt({ dark, size = 18 }: { dark: boolean; size?: number }) {
   return (
@@ -27,64 +17,16 @@ function Bolt({ dark, size = 18 }: { dark: boolean; size?: number }) {
   );
 }
 
-// in the arc panel's corner; fades in with the name so it never flies up with the arc
-export function PanelSwitch() {
+export function ThemeBolt({ className = '' }: { className?: string }) {
   const { theme } = useTheme();
   return (
     <button
       type="button"
-      onClick={(e) => flip(e.currentTarget)}
-      aria-label={label(theme === 'dark')}
-      style={{
-        top: 'max(14px, env(safe-area-inset-top))',
-        right: 'max(14px, env(safe-area-inset-right))',
-        animationDelay: '650ms',
-      }}
-      className="animate-intro-fade group pointer-events-auto absolute grid h-11 w-11 place-items-center rounded-full border border-chalk/20 text-chalk transition-colors hover:border-chalk/50"
-    >
-      <Bolt dark={theme === 'dark'} />
-    </button>
-  );
-}
-
-const filterBar = () => document.querySelector('nav[aria-label="Filter timeline"]')?.parentElement?.parentElement as HTMLElement | null;
-
-// shown only while the filter bar is stuck to the top. Positioned by CSS (.dock-switch) on the
-// right side of the screen at all times, so it never teleports across the screen or glitches on load.
-export function DockSwitch() {
-  const { theme } = useTheme();
-  const [stuck, setStuck] = useState(false);
-  useEffect(() => {
-    let raf = 0;
-    const read = () => {
-      raf = 0;
-      const b = filterBar();
-      if (!b) return setStuck(false);
-      const r = b.getBoundingClientRect();
-      setStuck(r.top <= 0.5);
-    };
-    const on = () => { if (!raf) raf = requestAnimationFrame(read); };
-    read();
-    window.addEventListener('scroll', on, { passive: true });
-    window.addEventListener('resize', on);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', on); window.removeEventListener('resize', on); };
-  }, []);
-  return (
-    <button
-      type="button"
-      data-dock-switch={stuck ? 'shown' : ''}
-      tabIndex={stuck ? 0 : -1}
-      onClick={(e) => flip(e.currentTarget)}
-      aria-label={label(theme === 'dark')}
-      className={`dock-switch group fixed z-40 flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-rule bg-paper/90 text-ink/70 backdrop-blur-md transition-[opacity,transform,border-color,color] duration-300 hover:border-ink/30 hover:text-ink lg:h-8 lg:w-8 xl:w-auto xl:pl-2.5 xl:pr-3.5 ${
-        stuck ? 'scale-100 opacity-100' : 'pointer-events-none scale-50 opacity-0'
-      }`}
+      onClick={flip}
+      aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+      className={`group grid h-9 w-9 shrink-0 place-items-center rounded-full border border-rule text-ink/70 transition-colors hover:border-ink/30 hover:text-ink ${className}`}
     >
       <Bolt dark={theme === 'dark'} size={15} />
-      {/* wide screens have room beside the bar for a label, in the tabs' micro-label style */}
-      <span aria-hidden className="hidden whitespace-nowrap font-heading text-[10.5px] font-bold uppercase tracking-[0.16em] xl:inline">
-        {theme === 'dark' ? 'Lights on' : 'Lights off'}
-      </span>
     </button>
   );
 }

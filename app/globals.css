@@ -27,17 +27,27 @@
     --accent: 214 112 70;
   }
 
+  /* Safari 26 on iPhone colours the strip behind the Dynamic Island from the html/body
+     background and the glass under its URL bar from color-scheme, and changes them the moment
+     the theme class flips, ahead of the circle reveal. Keep both the same in both themes so
+     those strips never change: the light theme's charcoal, a dark scheme on iOS. */
   html {
     color-scheme: light;
-    background: rgb(var(--charcoal));
+    background: rgb(33 34 37);
   }
 
   html.dark {
     color-scheme: dark;
-    --charcoal: 19 19 21;
   }
 
-  /* theme switch circle reveal (View Transitions): the new page is clipped in by script */
+  @supports (-webkit-touch-callout: none) {
+    html,
+    html.dark {
+      color-scheme: dark;
+    }
+  }
+
+  /* theme switch (View Transitions): the new page fades in by script (lib/theme-reveal.ts) */
   ::view-transition-old(root),
   ::view-transition-new(root) {
     animation: none;
@@ -45,7 +55,8 @@
   }
 
   body {
-    @apply bg-charcoal text-ink;
+    @apply text-ink;
+    background: rgb(33 34 37);
     overscroll-behavior: none;
   }
 
@@ -56,26 +67,6 @@
 }
 
 @layer utilities {
-  /* Intro glow (IntroGlow): dark mode deepens the charcoal and flickers; light has a warm glow. */
-  .dark [data-intro], html.dark { --charcoal: 19 19 21; }
-  .dark .intro-light, html:not(.dark) .intro-dark { display: none; }
-  @keyframes intro-flicker { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .16; } 92% { opacity: 0; } 93.5% { opacity: .1; } 95% { opacity: 0; } }
-  .intro-flicker { opacity: 0; animation: intro-flicker 7s linear 2.4s infinite; }
-
-  /* DockSwitch: pinned to the right end of the filter bar. From lg it sits just past the bar's
-     right edge (the column is max-w-4xl, the bar bleeds 32px), centred on the tab labels' line. */
-  .dock-switch {
-    top: max(5px, calc(env(safe-area-inset-top, 0px) + 5px));
-    right: max(14px, env(safe-area-inset-right, 0px));
-  }
-  @media (min-width: 1024px) {
-    .dock-switch {
-      top: 13px;
-      right: auto;
-      left: calc(50% + 460px);
-    }
-  }
-
   /* Standalone PWA mode: ensures the intro covers the full physical display height */
   @media (display-mode: standalone) {
     [data-intro] {
@@ -260,7 +251,6 @@
 
   @media (prefers-reduced-motion: reduce) {
     .animate-arc,
-    .intro-flicker,
     .animate-intro-fade,
     .animate-spin-record,
     .animate-bar,

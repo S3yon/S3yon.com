@@ -19,6 +19,7 @@ import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } fr
 import type { GithubStats } from '@/lib/github';
 import OnRotation from './OnRotation';
 import { useSpotify, type SpotifyState } from '@/lib/use-spotify';
+import { ThemeBolt } from './ThunderSwitch';
 
 type FilterKey = 'all' | 'award' | EntryKind;
 
@@ -501,15 +502,16 @@ function Rail({
     new Image().src = '/sprites/pikachu-moods.webp';
 
     // Hello: once per visit, when the reader first pauses with Pikachu fully in view (and
-    // room for the portrait below the sticky filter bar), it hops and throws a peace sign.
+    // room for the portrait below the filter bar), it hops and throws a peace sign.
     let greeted = false;
     let settle = 0;
     const roomy = () => {
       const r = hopScope.current?.getBoundingClientRect();
-      const bar = document.querySelector('nav[aria-label="Filter timeline"]')?.parentElement?.getBoundingClientRect();
+      // the inline filter bar, or its fixed copy once that has slid in (a hidden copy sits above the top)
+      const bars = [...document.querySelectorAll('[data-filter-bar]')].map((b) => b.getBoundingClientRect().bottom);
       if (!r) return false;
       const portraitTop = r.top - 100; // the framed portrait is ~95px tall above its head
-      const floor = Math.max(bar ? bar.bottom : 0, 0) + 8;
+      const floor = Math.max(0, ...bars) + 8;
       return portraitTop >= floor && r.bottom <= window.innerHeight - 8;
     };
     const tryGreet = () => {
@@ -868,55 +870,98 @@ function LeadRows({ github, spotify }: { github: GithubStats | null; spotify: Sp
   );
 }
 
+type BarProps = { active: FilterKey; shown: number; onChange: (key: FilterKey) => void };
+
 // Editorial tab row on a hairline, in the same uppercase micro-label style as the links.
-function FilterBar({
-  active,
-  shown,
-  onChange,
-}: {
-  active: FilterKey;
-  shown: number;
-  onChange: (key: FilterKey) => void;
-}) {
+// `id` keeps the underline's layout animation apart when two copies are on the page.
+function Tabs({ active, shown, onChange, id, right }: BarProps & { id: string; right?: React.ReactNode }) {
   return (
-    <div className="sticky top-0 z-30 -mx-5 mb-14 bg-paper/90 px-5 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:-mx-8 sm:px-8">
-      <div className="flex items-end justify-between gap-6 border-b border-rule">
-        <nav
-          aria-label="Filter timeline"
-          className="-mb-px mr-12 flex gap-6 overflow-x-auto pr-8 lg:mr-0 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
-        >
-          {FILTERS.map((f) => {
-            const on = f.key === active;
-            return (
-              <button
-                key={f.key}
-                type="button"
-                aria-pressed={on}
-                onClick={() => onChange(f.key)}
-                className={`relative shrink-0 pb-3.5 pt-5 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] transition-colors duration-300 ${
-                  on ? 'text-ink' : 'text-faint hover:text-ink/70'
-                }`}
-              >
-                {f.label}
-                <span className="ml-1.5 font-sans text-[11px] font-medium tracking-normal tabular-nums text-faint">
-                  {feed.filter(f.match).length}
-                </span>
-                {on && (
-                  <motion.span
-                    layoutId="filter-underline"
-                    className="absolute inset-x-0 bottom-0 h-[2px] bg-accent"
-                    transition={{ type: 'spring', stiffness: 420, damping: 38 }}
-                  />
-                )}
-              </button>
-            );
-          })}
-        </nav>
+    <div className="flex items-end justify-between gap-6 border-b border-rule">
+      <nav
+        aria-label={id === 'inline' ? 'Filter timeline' : undefined}
+        className="-mb-px flex min-w-0 gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
+      >
+        {FILTERS.map((f) => {
+          const on = f.key === active;
+          return (
+            <button
+              key={f.key}
+              type="button"
+              aria-pressed={on}
+              onClick={() => onChange(f.key)}
+              className={`relative shrink-0 pb-3.5 pt-5 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] transition-colors duration-300 ${
+                on ? 'text-ink' : 'text-faint hover:text-ink/70'
+              }`}
+            >
+              {f.label}
+              <span className="ml-1.5 font-sans text-[11px] font-medium tracking-normal tabular-nums text-faint">
+                {feed.filter(f.match).length}
+              </span>
+              {on && (
+                <motion.span
+                  layoutId={`filter-underline-${id}`}
+                  className="absolute inset-x-0 bottom-0 h-[2px] bg-accent"
+                  transition={{ type: 'spring', stiffness: 420, damping: 38 }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </nav>
+      {right ?? (
         <p className="hidden shrink-0 pb-3.5 text-[12.5px] tabular-nums text-faint lg:block">
           {shown} {shown === 1 ? 'entry' : 'entries'}
         </p>
-      </div>
+      )}
     </div>
+  );
+}
+
+// Where the inline bar is: `past` once it has scrolled off the top, `ended` once the feed's end
+// has too. Read once per frame, set only on change.
+function useBarPlace(bar: React.RefObject<HTMLElement | null>, feedEl: React.RefObject<HTMLElement | null>) {
+  const [place, setPlace] = useState({ past: false, ended: false });
+  useEffect(() => {
+    let raf = 0;
+    const read = () => {
+      raf = 0;
+      const past = !!bar.current && bar.current.getBoundingClientRect().top < 0;
+      const ended = !!feedEl.current && feedEl.current.getBoundingClientRect().bottom < 120;
+      setPlace((p) => (p.past === past && p.ended === ended ? p : { past, ended }));
+    };
+    const on = () => { if (!raf) raf = requestAnimationFrame(read); };
+    read();
+    window.addEventListener('scroll', on, { passive: true });
+    window.addEventListener('resize', on);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', on); window.removeEventListener('resize', on); };
+  }, [bar, feedEl]);
+  return place;
+}
+
+// The bar stays in the page; once it scrolls off the top, a position: fixed copy with the theme
+// bolt slides in and takes over. A sticky bar shook on iPhone (WebKit repaints sticky elements
+// while the toolbar collapses); a fixed one doesn't.
+function FilterBar(props: BarProps & { feedEl: React.RefObject<HTMLDivElement | null> }) {
+  const { feedEl, ...bar } = props;
+  const ref = useRef<HTMLDivElement>(null);
+  const place = useBarPlace(ref, feedEl);
+  const shown = place.past && !place.ended;
+  return (
+    <>
+      <div ref={ref} data-filter-bar className="-mx-5 mb-14 px-5 sm:-mx-8 sm:px-8">
+        <Tabs {...bar} id="inline" />
+      </div>
+      <div
+        data-filter-bar
+        aria-hidden={!shown}
+        inert={!shown}
+        className={`fixed inset-x-0 top-0 z-30 bg-paper pt-[env(safe-area-inset-top)] transition-transform duration-300 ease-out ${shown ? 'translate-y-0' : '-translate-y-full'}`}
+      >
+        <div className="mx-auto max-w-4xl px-5 sm:px-8">
+          <Tabs {...bar} id="fixed" right={<ThemeBolt className="mb-2 ml-1" />} />
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -968,7 +1013,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
   return (
     <FeedMode.Provider value={{ filtered }}>
       <div ref={topRef}>
-        <FilterBar active={filter} shown={count} onChange={choose} />
+        <FilterBar active={filter} shown={count} onChange={choose} feedEl={topRef} />
         {/* Crossfade the whole list on a filter change instead of animating each entry. */}
         <AnimatePresence mode="wait" initial={false} onExitComplete={resetScroll}>
           <motion.div
