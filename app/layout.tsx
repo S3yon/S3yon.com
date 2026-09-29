@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { themeBootScript } from "@/lib/theme-boot";
+import { scrollBootScript } from "@/lib/scroll-boot";
 
 const display = Anton({
   subsets: ["latin"],
@@ -54,6 +55,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script dangerouslySetInnerHTML={{ __html: scrollBootScript }} />
         {/* older iOS reads this instead of the manifest's display mode */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
       </head>
