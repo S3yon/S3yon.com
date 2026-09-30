@@ -7,8 +7,8 @@ import PlayerLoader from './PlayerLoader';
 import { timeAgo, type SpotifyState } from '@/lib/use-spotify';
 import { trackUri, useSpotifyEmbed } from '@/lib/use-spotify-embed';
 
-// "On rotation": the last six tracks as a crate of records on the rail. Hover (or use the
-// touch button) to fan them out; click a cover and a compact Spotify player loads beside the
+// "On rotation": the last six tracks as a crate of records on the rail. Hover (or, on touch
+// screens, scroll it into view) to fan them out; click a cover and a compact Spotify player loads beside the
 // crate and plays it. Logged-out visitors hear 30s previews, Premium listeners the full song.
 // The marker is a small record that spins while music plays, here or on Seyon's Spotify.
 export default function OnRotation({ spotify }: { spotify: SpotifyState | null }) {
@@ -37,9 +37,24 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
     // the crate's own column (next to the touch button, beside the player)
     const el = crate.current?.parentElement;
     if (!el) return;
-    const ro = new ResizeObserver(() => setRoom(el.clientWidth - (window.matchMedia('(hover: none)').matches ? 48 : 0)));
+    const ro = new ResizeObserver(() => setRoom(el.clientWidth));
     ro.observe(el);
     return () => ro.disconnect();
+  }, [hasCovers]);
+
+  // touch screens can't hover: fan the crate out once it's mostly in view, stack it when it leaves
+  useEffect(() => {
+    const el = crate.current;
+    if (!el || !window.matchMedia('(hover: none)').matches) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        setOpen(e.intersectionRatio >= 0.6);
+        setHover(null);
+      },
+      { threshold: [0, 0.6] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, [hasCovers]);
 
   if (!covers.length) return null;
@@ -110,32 +125,6 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
               </motion.button>
             ))}
           </div>
-          {/* touch screens can't hover: a small button fans the crate out and back */}
-          <button
-            type="button"
-            onClick={() => {
-              setOpen((o) => !o);
-              setHover(null);
-            }}
-            aria-expanded={open}
-            aria-label={open ? 'Stack the albums' : 'Spread out the albums'}
-            className="hidden h-9 w-9 shrink-0 place-items-center rounded-full border border-rule bg-paper text-muted shadow-[0_4px_12px_-8px_rgba(0,0,0,0.4)] transition-colors active:bg-ink/5 [@media(hover:none)]:grid"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="transition-transform duration-300"
-              style={{ transform: open ? 'rotate(180deg)' : 'none' }}
-            >
-              <path d="m9 6 6 6-6 6" />
-            </svg>
-          </button>
           </div>
           {/* the player, in its own column */}
           <div
