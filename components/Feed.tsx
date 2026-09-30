@@ -501,8 +501,8 @@ function Rail({
     // no idle glances until the reader has scrolled and stopped: it faces you until then
     new Image().src = '/sprites/pikachu-moods.webp';
 
-    // Hello: once per visit, when the reader first pauses with Pikachu fully in view (and
-    // room for the portrait below the filter bar), it hops and throws a peace sign.
+    // Hello: once per visit, the moment a scroll brings Pikachu fully into view (with room for
+    // the portrait below the filter bar), it hops and throws a peace sign, even mid-scroll.
     let greeted = false;
     let settle = 0;
     const roomy = () => {
@@ -522,15 +522,15 @@ function Rail({
       emote('wink', 2800);
     };
     const greet = () => {
-      window.clearTimeout(settle);
-      settle = window.setTimeout(tryGreet, 220);
+      cancelAnimationFrame(settle);
+      settle = requestAnimationFrame(tryGreet);
     };
     window.addEventListener('scroll', greet, { passive: true });
     const t = timers.current;
     return () => {
       window.removeEventListener('timeline:reveal', onReveal);
       window.removeEventListener('scroll', greet);
-      window.clearTimeout(settle);
+      cancelAnimationFrame(settle);
       window.clearTimeout(t.stop);
       window.clearTimeout(t.idle);
       window.clearTimeout(t.bubble);
