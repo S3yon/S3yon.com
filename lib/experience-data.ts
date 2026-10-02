@@ -157,7 +157,7 @@ export const feed: FeedEntry[] = [
     description:
       'Multi-agent system with 4 autonomous agents that monitor and remediate Docker container health issues, with a production monitoring stack. Built in 24 hours.',
     tags: ['Python', 'Docker', 'Redis', 'LangChain', 'Prometheus', 'Grafana', 'Streamlit'],
-    links: [{ label: 'GitHub', url: 'https://github.com/S3yon/HemoStat' }],
+    links: [{ label: 'GitHub', url: 'https://github.com/CommunityHackathons/HemoStat' }],
   },
   {
     year: 2025,
@@ -228,7 +228,7 @@ export const feed: FeedEntry[] = [
     tags: ['Next.js', 'TypeScript', 'Express', 'Node.js', 'Tailwind CSS'],
     links: [
       { label: 'DevPost', url: 'https://devpost.com/software/pricevalve' },
-      { label: 'GitHub', url: 'https://github.com/S3yon/PriceValve' },
+      { label: 'GitHub', url: 'https://github.com/rick-mingyu-liu/PriceValve' },
     ],
   },
   {
