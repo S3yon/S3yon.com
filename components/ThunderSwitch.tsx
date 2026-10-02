@@ -4,7 +4,7 @@ import { useTheme } from '@/lib/theme';
 import { switchTheme } from '@/lib/theme-reveal';
 
 // Dark mode toggle for the timeline (the intro keeps one look). ThemeBolt sits at the right end
-// of the fixed filter bar, which only shows once the inline bar has scrolled off the top.
+// of the fixed filter bar, which only shows once the content panel has reached the top.
 
 // read the live page, not state, so the switch can never go the wrong way
 const flip = () => switchTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');

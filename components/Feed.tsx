@@ -507,7 +507,7 @@ function Rail({
     let settle = 0;
     const roomy = () => {
       const r = hopScope.current?.getBoundingClientRect();
-      // the inline filter bar, or its fixed copy once that has slid in (a hidden copy sits above the top)
+      // the fixed filter bar once it has slid in (hidden, it sits above the top)
       const bars = [...document.querySelectorAll('[data-filter-bar]')].map((b) => b.getBoundingClientRect().bottom);
       if (!r) return false;
       const portraitTop = r.top - 100; // the framed portrait is ~95px tall above its head
@@ -870,15 +870,14 @@ function LeadRows({ github, spotify }: { github: GithubStats | null; spotify: Sp
   );
 }
 
-type BarProps = { active: FilterKey; shown: number; onChange: (key: FilterKey) => void };
+type BarProps = { active: FilterKey; onChange: (key: FilterKey) => void };
 
 // Editorial tab row on a hairline, in the same uppercase micro-label style as the links.
-// `id` keeps the underline's layout animation apart when two copies are on the page.
-function Tabs({ active, shown, onChange, id, right }: BarProps & { id: string; right?: React.ReactNode }) {
+function Tabs({ active, onChange }: BarProps) {
   return (
     <div className="flex items-end justify-between gap-6 border-b border-rule">
       <nav
-        aria-label={id === 'inline' ? 'Filter timeline' : undefined}
+        aria-label="Filter timeline"
         className="-mb-px flex min-w-0 gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
       >
         {FILTERS.map((f) => {
@@ -899,7 +898,7 @@ function Tabs({ active, shown, onChange, id, right }: BarProps & { id: string; r
               </span>
               {on && (
                 <motion.span
-                  layoutId={`filter-underline-${id}`}
+                  layoutId="filter-underline"
                   className="absolute inset-x-0 bottom-0 h-[2px] bg-accent"
                   transition={{ type: 'spring', stiffness: 420, damping: 38 }}
                 />
@@ -908,25 +907,25 @@ function Tabs({ active, shown, onChange, id, right }: BarProps & { id: string; r
           );
         })}
       </nav>
-      {right ?? (
-        <p className="hidden shrink-0 pb-3.5 text-[12.5px] tabular-nums text-faint lg:block">
-          {shown} {shown === 1 ? 'entry' : 'entries'}
-        </p>
-      )}
+      <ThemeBolt className="mb-2 ml-1" />
     </div>
   );
 }
 
-// Where the inline bar is: `past` once it has scrolled off the top, `ended` once the feed's end
-// has too. Read once per frame, set only on change.
-function useBarPlace(bar: React.RefObject<HTMLElement | null>, feedEl: React.RefObject<HTMLElement | null>) {
+// The content panel (#work) the feed sits in, or the feed itself outside one.
+const panelOf = (el: HTMLElement) => el.closest<HTMLElement>('#work') ?? el;
+
+// Where the feed is: `past` once its panel's top has reached the top of the screen, `ended` once
+// the feed's end has scrolled off. Read once per frame, set only on change.
+function useBarPlace(feedEl: React.RefObject<HTMLElement | null>) {
   const [place, setPlace] = useState({ past: false, ended: false });
   useEffect(() => {
     let raf = 0;
     const read = () => {
       raf = 0;
-      const past = !!bar.current && bar.current.getBoundingClientRect().top < 0;
-      const ended = !!feedEl.current && feedEl.current.getBoundingClientRect().bottom < 120;
+      const feed = feedEl.current;
+      const past = !!feed && panelOf(feed).getBoundingClientRect().top < 1;
+      const ended = !!feed && feed.getBoundingClientRect().bottom < 120;
       setPlace((p) => (p.past === past && p.ended === ended ? p : { past, ended }));
     };
     const on = () => { if (!raf) raf = requestAnimationFrame(read); };
@@ -934,36 +933,31 @@ function useBarPlace(bar: React.RefObject<HTMLElement | null>, feedEl: React.Ref
     window.addEventListener('scroll', on, { passive: true });
     window.addEventListener('resize', on);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', on); window.removeEventListener('resize', on); };
-  }, [bar, feedEl]);
+  }, [feedEl]);
   return place;
 }
 
-// The bar stays in the page; once it scrolls off the top, a position: fixed copy with the theme
-// bolt slides in and takes over. A sticky bar shook on iPhone (WebKit repaints sticky elements
-// while the toolbar collapses); a fixed one doesn't. Parked above the top it is also invisible,
-// or the overscroll bounce at the top of the page pulls it into view; visibility rides the
-// transition so it flips off only after the slide-out.
+// Nothing sits in the page: a tab row there rode up on the panel over the intro. Once the panel
+// covers the screen, a position: fixed bar with the theme bolt slides in, until the feed ends.
+// A sticky bar shook on iPhone (WebKit repaints sticky elements while the toolbar collapses); a
+// fixed one doesn't. Parked above the top it is also invisible, or the overscroll bounce at the
+// top of the page pulls it into view; visibility rides the transition so it flips off only
+// after the slide-out.
 function FilterBar(props: BarProps & { feedEl: React.RefObject<HTMLDivElement | null> }) {
   const { feedEl, ...bar } = props;
-  const ref = useRef<HTMLDivElement>(null);
-  const place = useBarPlace(ref, feedEl);
+  const place = useBarPlace(feedEl);
   const shown = place.past && !place.ended;
   return (
-    <>
-      <div ref={ref} data-filter-bar className="-mx-5 mb-14 px-5 sm:-mx-8 sm:px-8">
-        <Tabs {...bar} id="inline" />
+    <div
+      data-filter-bar
+      aria-hidden={!shown}
+      inert={!shown}
+      className={`fixed inset-x-0 top-0 z-30 bg-paper pt-[env(safe-area-inset-top)] transition-[transform,visibility] duration-300 ease-out ${shown ? 'visible translate-y-0' : 'invisible -translate-y-full'}`}
+    >
+      <div className="mx-auto max-w-4xl px-5 sm:px-8">
+        <Tabs {...bar} />
       </div>
-      <div
-        data-filter-bar
-        aria-hidden={!shown}
-        inert={!shown}
-        className={`fixed inset-x-0 top-0 z-30 bg-paper pt-[env(safe-area-inset-top)] transition-[transform,visibility] duration-300 ease-out ${shown ? 'visible translate-y-0' : 'invisible -translate-y-full'}`}
-      >
-        <div className="mx-auto max-w-4xl px-5 sm:px-8">
-          <Tabs {...bar} id="fixed" right={<ThemeBolt className="mb-2 ml-1" />} />
-        </div>
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -987,14 +981,11 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
   const [filtered, setFiltered] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
-  const { groups, count } = useMemo(() => {
+  const groups = useMemo(() => {
     const match = FILTERS.find((f) => f.key === filter)!.match;
     const shown = feed.filter(match);
     const yrs = [...new Set(shown.map((e) => e.year))].sort((a, b) => b - a);
-    return {
-      count: shown.length,
-      groups: yrs.map((year) => ({ year, entries: shown.filter((e) => e.year === year) })),
-    };
+    return yrs.map((year) => ({ year, entries: shown.filter((e) => e.year === year) }));
   }, [filter]);
 
   const choose = (key: FilterKey) => {
@@ -1003,19 +994,20 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
     setFilter(key);
   };
 
-  // Runs while the old list is faded out and before the new one mounts: if the bar is stuck
-  // mid-feed, jump back to the start of the results so the new list lays out in place.
+  // Runs while the old list is faded out and before the new one mounts: if the panel is scrolled
+  // past the top, jump back to its top (results start just under the bar) so the new list lays
+  // out in place.
   const resetScroll = () => {
-    const top = topRef.current;
-    if (top && top.getBoundingClientRect().top < 0) {
-      window.scrollTo({ top: window.scrollY + top.getBoundingClientRect().top, behavior: 'instant' });
+    const panel = topRef.current && panelOf(topRef.current);
+    if (panel && panel.getBoundingClientRect().top < 0) {
+      window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top, behavior: 'instant' });
     }
   };
 
   return (
     <FeedMode.Provider value={{ filtered }}>
       <div ref={topRef}>
-        <FilterBar active={filter} shown={count} onChange={choose} feedEl={topRef} />
+        <FilterBar active={filter} onChange={choose} feedEl={topRef} />
         {/* Crossfade the whole list on a filter change instead of animating each entry. */}
         <AnimatePresence mode="wait" initial={false} onExitComplete={resetScroll}>
           <motion.div
