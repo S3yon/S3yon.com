@@ -940,7 +940,9 @@ function useBarPlace(bar: React.RefObject<HTMLElement | null>, feedEl: React.Ref
 
 // The bar stays in the page; once it scrolls off the top, a position: fixed copy with the theme
 // bolt slides in and takes over. A sticky bar shook on iPhone (WebKit repaints sticky elements
-// while the toolbar collapses); a fixed one doesn't.
+// while the toolbar collapses); a fixed one doesn't. Parked above the top it is also invisible,
+// or the overscroll bounce at the top of the page pulls it into view; visibility rides the
+// transition so it flips off only after the slide-out.
 function FilterBar(props: BarProps & { feedEl: React.RefObject<HTMLDivElement | null> }) {
   const { feedEl, ...bar } = props;
   const ref = useRef<HTMLDivElement>(null);
@@ -955,7 +957,7 @@ function FilterBar(props: BarProps & { feedEl: React.RefObject<HTMLDivElement | 
         data-filter-bar
         aria-hidden={!shown}
         inert={!shown}
-        className={`fixed inset-x-0 top-0 z-30 bg-paper pt-[env(safe-area-inset-top)] transition-transform duration-300 ease-out ${shown ? 'translate-y-0' : '-translate-y-full'}`}
+        className={`fixed inset-x-0 top-0 z-30 bg-paper pt-[env(safe-area-inset-top)] transition-[transform,visibility] duration-300 ease-out ${shown ? 'visible translate-y-0' : 'invisible -translate-y-full'}`}
       >
         <div className="mx-auto max-w-4xl px-5 sm:px-8">
           <Tabs {...bar} id="fixed" right={<ThemeBolt className="mb-2 ml-1" />} />
