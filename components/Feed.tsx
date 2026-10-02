@@ -264,7 +264,7 @@ const MOOD_LABEL: Record<Mood, string> = {
 const TAP_MOODS: Mood[] = [...MOODS];
 const LINES = ['Pika!', 'Pika pika!', 'Chu~', 'Pikachu!'];
 
-// Easter egg: on 1 visit in 10 (or with ?ditto) the rail's Pikachu is Ditto in disguise.
+// Easter egg: on 1 visit in 3 (or with ?ditto) the rail's Pikachu is Ditto in disguise.
 // 'pika' = disguised, 'blob' = the disguise has melted, 'copy' = walks on as a lavender Pikachu.
 const DITTO_LINES = ['Ditto!', 'Pika… to!', 'Dit-chu!'];
 
@@ -978,7 +978,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
   useEffect(() => setDuo({ music: !!music }), [music]);
   const [ditto, setDitto] = useState<DittoStage>('off');
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).has('ditto') || Math.random() < 0.1) setDitto('pika');
+    if (new URLSearchParams(window.location.search).has('ditto') || Math.random() < 1 / 3) setDitto('pika');
   }, []);
   useEffect(() => setDuo({ stage: ditto }), [ditto]);
   const [filter, setFilter] = useState<FilterKey>('all');
