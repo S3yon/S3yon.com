@@ -37,7 +37,7 @@ export const feed: FeedEntry[] = [
     title: 'Photographer',
     org: 'Hack the North',
     logo: '/logos/hackthenorth.png',
-    orgUrl: 'https://www.linkedin.com/company/hack-the-north/',
+    orgUrl: 'https://hackthenorth.com/',
     kind: 'community',
     description:
       "Back on staff for a second year, shooting photos and video across the weekend at Canada's biggest hackathon.",
@@ -188,7 +188,7 @@ export const feed: FeedEntry[] = [
     title: 'Volunteer Staff',
     org: 'Hack the North',
     logo: '/logos/hackthenorth.png',
-    orgUrl: 'https://www.linkedin.com/company/hack-the-north/',
+    orgUrl: 'https://hackthenorth.com/',
     kind: 'community',
     description: "Supported Canada's largest hackathon — 1,000+ participants at Waterloo.",
   },
