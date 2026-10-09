@@ -22,6 +22,17 @@ export interface FeedEntry {
 export const feed: FeedEntry[] = [
   {
     year: 2026,
+    month: 'October',
+    title: 'Case Closed',
+    org: 'GDG Sheridan',
+    logo: '/logos/gdgsheridan.png',
+    orgUrl: 'https://www.gdgsheridan.com/',
+    kind: 'community',
+    description:
+      "Filmed Sheridan's one-day case competition, cut the start-of-day montage and the full event recap, and built the case-file photobooth frame.",
+  },
+  {
+    year: 2026,
     month: 'September',
     title: 'A Future Beyond Hackathons: Cross Collaboration in the Professional World',
     org: 'GDG Sheridan',
@@ -313,8 +324,8 @@ export const feed: FeedEntry[] = [
 
 export const years = [...new Set(feed.map((e) => e.year))].sort((a, b) => b - a);
 
-// Upcoming public events. The feed shows only the next one that hasn't happened yet, so
-// past entries expire on their own. Dates are local (Toronto), YYYY-MM-DD.
+// Upcoming public events. The feed shows only the next one that hasn't happened yet. Once
+// one has happened, delete it here and add it to `feed` above. Dates are local (Toronto), YYYY-MM-DD.
 export interface UpcomingEvent {
   date: string;
   title: string;
@@ -323,12 +334,6 @@ export interface UpcomingEvent {
 }
 
 export const upcoming: UpcomingEvent[] = [
-  {
-    date: '2026-10-04',
-    title: 'Case Closed @ GDG Sheridan',
-    detail: "Sheridan's one-day case competition across analytics, engineering and business strategy, judged by GTA industry leaders.",
-    url: 'https://gdg.community.dev/events/details/google-gdg-on-campus-sheridan-college-trafalgar-road-campus-oakville-canada-presents-get-into-gear-case-closed-sheridans-official-case-study-competition/',
-  },
   {
     date: '2026-10-16',
     title: 'Hack the Valley 11',
