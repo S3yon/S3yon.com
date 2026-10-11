@@ -249,7 +249,49 @@
     100% { transform: translate(18px, -40px) scale(1.1); opacity: 0; }
   }
 
+  /* Thunder rings (components/ThunderRings.tsx): a yellow dot replaces the mouse arrow and every
+     click sends a ring out. The thin ink outline keeps the dot visible on light paper. */
+  html.thunder-cursor,
+  html.thunder-cursor * { cursor: none !important; }
+  .thunder-dot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border-radius: 9999px;
+    background: #F6CE3A;
+    opacity: 0;
+    box-shadow: 0 0 0 1px rgb(var(--ink) / 0.35), 0 0 16px #F6CE3A;
+  }
+  .thunder-ring {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border: 2px solid #F6CE3A;
+    border-radius: 9999px;
+    animation: ring-out 750ms cubic-bezier(0.2, 0.6, 0.2, 1) forwards;
+  }
+  @keyframes ring-out {
+    to { transform: scale(11); opacity: 0; }
+  }
+
+  /* Aurora text: the footer's last line drifts through rust, amber and Pikachu yellow. */
+  .aurora-text {
+    background: linear-gradient(100deg, #B4502A, #E8773A, #F6CE3A, #E8773A, #B4502A);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: aurora 6s ease-in-out infinite alternate;
+  }
+  @keyframes aurora {
+    to { background-position: 100% 0; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
+    .thunder-ring,
+    .aurora-text,
     .animate-arc,
     .animate-intro-fade,
     .animate-spin-record,
