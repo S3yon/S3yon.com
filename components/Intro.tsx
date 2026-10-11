@@ -2,8 +2,7 @@ import NowPlaying from './NowPlaying';
 import ThunderCharge from './name-fx/ThunderCharge';
 import IntroGlow from './IntroGlow';
 import IntroFit from './IntroFit';
-
-type Social = { name: string; url: string; icon: React.ReactNode };
+import SocialDock, { type Social } from './SocialDock';
 
 const svg = (path: React.ReactNode) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -90,25 +89,11 @@ export default function Intro() {
           />
 
           {/* socials, right under the name */}
-          <nav
-            className="animate-intro-fade mt-[clamp(10px,3svh,32px)] flex items-center gap-2"
+          <SocialDock
+            socials={socials}
+            className="animate-intro-fade mt-[clamp(10px,3svh,32px)]"
             style={{ animationDelay: '820ms' }}
-            aria-label="Elsewhere"
-          >
-            {socials.map((social) => (
-              <a
-                key={social.name}
-                href={social.url}
-                aria-label={social.name}
-                title={social.name}
-                target={social.url.startsWith('mailto:') ? undefined : '_blank'}
-                rel={social.url.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
-                className="grid h-11 w-11 place-items-center rounded-full border border-chalk/15 text-chalk/60 transition-all duration-300 hover:-translate-y-0.5 hover:border-chalk/45 hover:text-chalk"
-              >
-                {social.icon}
-              </a>
-            ))}
-          </nav>
+          />
 
           {/* at-a-glance notes */}
           <dl className="mt-[clamp(14px,5svh,56px)] grid max-w-3xl grid-cols-2 gap-x-6 gap-y-[clamp(10px,3svh,24px)] sm:gap-x-10 lg:grid-cols-4 [@media(max-height:430px)]:hidden [@media(min-width:640px)_and_(max-height:640px)]:grid-cols-4">
