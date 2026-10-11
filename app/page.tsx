@@ -4,6 +4,7 @@ import Feed from '@/components/Feed';
 import Intro from '@/components/Intro';
 import IntroParallax from '@/components/IntroParallax';
 import Reveal from '@/components/Reveal';
+import ThunderRings from '@/components/ThunderRings';
 import { getGithubStats } from '@/lib/github';
 
 // Refresh the GitHub counts every hour.
@@ -13,6 +14,7 @@ export default async function Home() {
   const github = await getGithubStats();
   return (
     <>
+      <ThunderRings />
       <Intro />
       <IntroParallax />
 
@@ -32,7 +34,7 @@ export default async function Home() {
                 <h2 className="font-heading text-[clamp(34px,8vw,52px)] font-extrabold leading-[0.95] tracking-[-0.03em]">
                   Come sit by the fire.
                   <br />
-                  <span className="text-accent">Let&apos;s build something.</span>
+                  <span className="aurora-text">Let&apos;s build something.</span>
                 </h2>
               </Reveal>
             </div>
