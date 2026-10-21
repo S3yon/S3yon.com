@@ -180,7 +180,7 @@ export default function Campfire() {
         .duo-pop { animation: duo-pop 180ms ease-out; }
         @keyframes duo-swap { from { transform: scale(1.4, 0.3); } to { transform: none; } }
         .duo-swap { animation: duo-swap 320ms cubic-bezier(0.3, 1.6, 0.5, 1); transform-origin: 50% 100%; }
-        @keyframes duo-hi { 0%, 100% { transform: none; } 35% { transform: translateY(-9px); } 60% { transform: translateY(0) scale(1.08, 0.92); } }
+        @keyframes duo-hi { 0%, 100% { transform: none; } 35% { transform: translateY(-9px); } 60% { transform: none; } }
         .duo-hi { animation: duo-hi 420ms ease-out; }
         @keyframes duo-sit { from { transform: scale(0.667); } to { transform: none; } }
         @media (min-width: 640px) { .duo-sit { animation: duo-sit 200ms ease-out backwards; transform-origin: 50% 100%; } }
@@ -195,8 +195,10 @@ export default function Campfire() {
         <button type="button" aria-label={runnerWho === 'pika' ? 'Pikachu' : 'Ditto'} data-seat="left" disabled={!join} onClick={(e) => tap(runnerWho, e.currentTarget)} className="cursor-pointer transition-transform hover:-translate-y-0.5 disabled:cursor-default">
           <span key={`hi${welcome}`} className={`block ${join ? 'duo-sit' : 'invisible'} ${welcome ? 'duo-hi' : ''}`}>
             <span key={imposter ? join ?? '' : ''} className="duo-swap block">
-              <span key={step?.key} className={`block ${step?.lc ?? ''}`}>
-                {imposter && join && join !== 'ditto' ? <Sprite look={join} facing={danceFacing('right')} walking={!!step?.walking} /> : character(runnerWho, 'right')}
+              <span className={`dance-sway block ${step?.ls ?? ''}`}>
+                <span className={`block ${step?.lh ?? ''}`}>
+                  {imposter && join && join !== 'ditto' ? <Sprite look={join} facing={danceFacing('right')} walking={!!step?.walking} /> : character(runnerWho, 'right')}
+                </span>
               </span>
             </span>
           </span>
@@ -207,7 +209,9 @@ export default function Campfire() {
         {/* right seat: the one who waits */}
         <button type="button" aria-label={waiterWho === 'pika' ? 'Pikachu' : 'Ditto'} data-seat="right" onClick={(e) => tap(waiterWho, e.currentTarget)} className="cursor-pointer transition-transform hover:-translate-y-0.5">
           <span key={`hi${welcome}`} className={`block ${welcome ? 'duo-hi' : ''}`}>
-            <span key={step?.key} className={`block ${step?.rc ?? ''}`}>{character(waiterWho, 'left')}</span>
+            <span className={`dance-sway block ${step?.rs ?? ''}`}>
+              <span className={`block ${step?.rh ?? ''}`}>{character(waiterWho, 'left')}</span>
+            </span>
           </span>
         </button>
       </div>
