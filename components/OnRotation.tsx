@@ -12,7 +12,7 @@ import { trackUri, useSpotifyEmbed } from '@/lib/use-spotify-embed';
 // crate and plays it. Logged-out visitors hear 30s previews, Premium listeners the full song.
 // The marker is a small record that spins while music plays, here or on Seyon's Spotify.
 export default function OnRotation({ spotify }: { spotify: SpotifyState | null }) {
-  const { host, state, play } = useSpotifyEmbed({ height: 152 });
+  const { host, state, play, warm } = useSpotifyEmbed({ height: 152 });
   const [hover, setHover] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const crate = useRef<HTMLDivElement>(null);
@@ -41,6 +41,23 @@ export default function OnRotation({ spotify }: { spotify: SpotifyState | null }
     ro.observe(el);
     return () => ro.disconnect();
   }, [hasCovers]);
+
+  // load the player (hidden) as the crate comes near, so one click on a cover starts the song
+  useEffect(() => {
+    const el = crate.current;
+    const first = trackUri(covers[0]?.songUrl);
+    if (!el || !first) return;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        warm(first);
+        io.disconnect();
+      },
+      { rootMargin: '400px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasCovers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // touch screens can't hover: fan the crate out once it's mostly in view, stack it when it leaves
   useEffect(() => {
