@@ -343,12 +343,6 @@ export interface UpcomingEvent {
 
 export const upcoming: UpcomingEvent[] = [
   {
-    date: '2026-10-16',
-    title: 'Hack the Valley 11',
-    detail: 'Hackathon at the University of Toronto Scarborough, October 16 to 18.',
-    url: 'https://hackthevalley.io/',
-  },
-  {
     date: '2026-11-07',
     title: 'Sheridan Datathon 2026 @ GDG Sheridan',
     detail: '24-hour data hackathon for 250+ students at Sheridan HMC, turning real industry datasets into insights.',
