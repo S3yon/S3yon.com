@@ -23,6 +23,16 @@ export const feed: FeedEntry[] = [
   {
     year: 2026,
     month: 'October',
+    title: 'Social Battery',
+    org: 'Sheridan Computer Science Club',
+    orgUrl: 'https://www.linkedin.com/company/sheridan-cs-club/',
+    kind: 'community',
+    description:
+      "Helped organize the club's fall social night at Trafalgar, with game stations, club booths and a Gemini agents workshop. Designed the photobooth frames, ran the booth and shot the event.",
+  },
+  {
+    year: 2026,
+    month: 'October',
     title: 'Case Closed',
     org: 'GDG Sheridan',
     logo: '/logos/gdgsheridan.png',
