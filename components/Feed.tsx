@@ -15,7 +15,7 @@ import Pikachu, { type PikaFacing } from './Pikachu';
 import { DittoSprite, DittoPika } from './ditto/Ditto';
 import { getDuo, setDuo, useDuo, type DittoStage } from '@/lib/duo';
 import { useInViewOnce, type ViewState } from '@/lib/use-in-view-once';
-import { feed, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
+import { feedOn, torontoDay, upcoming, type FeedEntry, type EntryKind, type UpcomingEvent } from '@/lib/experience-data';
 import type { GithubStats } from '@/lib/github';
 import OnRotation from './OnRotation';
 import { useSpotify, type SpotifyState } from '@/lib/use-spotify';
@@ -724,6 +724,14 @@ function YearSection({ year, entries }: { year: number; entries: FeedEntry[] }) 
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+// The feed with past upcoming events folded in. Starts from the build day so the server and
+// first client render match, then catches up to today on a page built before an event passed.
+function useFeed(): FeedEntry[] {
+  const [entries, setEntries] = useState(() => feedOn(process.env.NEXT_PUBLIC_BUILD_DAY ?? ''));
+  useEffect(() => setEntries(feedOn(torontoDay())), []);
+  return entries;
+}
+
 // Next upcoming event, picked on the client so a cached page never shows a past one.
 function useNextEvent(): { event: UpcomingEvent; when: string } | null {
   const [next, setNext] = useState<{ event: UpcomingEvent; when: string } | null>(null);
@@ -874,6 +882,7 @@ type BarProps = { active: FilterKey; onChange: (key: FilterKey) => void };
 
 // Editorial tab row on a hairline, in the same uppercase micro-label style as the links.
 function Tabs({ active, onChange }: BarProps) {
+  const feed = useFeed();
   return (
     <div className="flex items-end justify-between gap-6 border-b border-rule">
       <nav
@@ -977,16 +986,17 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
     if (new URLSearchParams(window.location.search).has('ditto') || Math.random() < 1 / 3) setDitto('pika');
   }, []);
   useEffect(() => setDuo({ stage: ditto }), [ditto]);
+  const entries = useFeed();
   const [filter, setFilter] = useState<FilterKey>('all');
   const [filtered, setFiltered] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
 
   const groups = useMemo(() => {
     const match = FILTERS.find((f) => f.key === filter)!.match;
-    const shown = feed.filter(match);
+    const shown = entries.filter(match);
     const yrs = [...new Set(shown.map((e) => e.year))].sort((a, b) => b - a);
     return yrs.map((year) => ({ year, entries: shown.filter((e) => e.year === year) }));
-  }, [filter]);
+  }, [filter, entries]);
 
   const choose = (key: FilterKey) => {
     if (key === filter) return;

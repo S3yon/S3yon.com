@@ -324,13 +324,21 @@ export const feed: FeedEntry[] = [
 
 export const years = [...new Set(feed.map((e) => e.year))].sort((a, b) => b - a);
 
-// Upcoming public events. The feed shows only the next one that hasn't happened yet. Once
-// one has happened, delete it here and add it to `feed` above. Dates are local (Toronto), YYYY-MM-DD.
+// Upcoming public events. The "Next up" row shows only the next one that hasn't happened yet.
+// Once its date passes, an event with a `recap` (what he did there, past tense) shows in the feed
+// on its own; one without just drops off. Dates are local (Toronto), YYYY-MM-DD.
 export interface UpcomingEvent {
   date: string;
   title: string;
   detail?: string;
   url?: string;
+  recap?: string;
+  // Feed entry fields for the recap. Title defaults to `title`, kind to community.
+  feedTitle?: string;
+  org?: string;
+  orgUrl?: string;
+  logo?: string;
+  kind?: EntryKind;
 }
 
 export const upcoming: UpcomingEvent[] = [
@@ -353,3 +361,38 @@ export const upcoming: UpcomingEvent[] = [
     url: 'https://www.spaceappschallenge.org/2026/local-events/toronto/',
   },
 ];
+
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const rank = (e: FeedEntry) => e.year * 12 + MONTH_NAMES.indexOf(e.month);
+
+// Today as YYYY-MM-DD in Toronto, the timezone the event dates are written in.
+export function torontoDay(now = new Date()) {
+  return now.toLocaleDateString('en-CA', { timeZone: 'America/Toronto' });
+}
+
+// The feed as of `day`: `feed` plus every past upcoming event that has a recap, each placed
+// above the entries from its month or earlier.
+export function feedOn(day: string): FeedEntry[] {
+  const done = upcoming
+    .filter((u) => u.recap && u.date < day)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .map((u): FeedEntry => {
+      const [y, m] = u.date.split('-').map(Number);
+      return {
+        year: y,
+        month: MONTH_NAMES[m - 1],
+        title: u.feedTitle ?? u.title,
+        org: u.org,
+        orgUrl: u.orgUrl ?? u.url,
+        logo: u.logo,
+        kind: u.kind ?? 'community',
+        description: u.recap!,
+      };
+    });
+  const out = [...feed];
+  for (const e of done.reverse()) {
+    const at = out.findIndex((f) => rank(f) <= rank(e));
+    out.splice(at === -1 ? out.length : at, 0, e);
+  }
+  return out;
+}
