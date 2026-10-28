@@ -2,7 +2,7 @@ import NowPlaying from './NowPlaying';
 import ThunderCharge from './name-fx/ThunderCharge';
 import IntroGlow from './IntroGlow';
 import IntroFit from './IntroFit';
-import SocialDock from './SocialDock';
+import QuietRing from './social-fx/Quiet';
 import { socials } from '@/lib/socials';
 
 // Glanceable facts in place of a paragraph: a micro-label and a short value each.
@@ -39,7 +39,7 @@ export default function Intro() {
           />
 
           {/* socials, right under the name */}
-          <SocialDock
+          <QuietRing
             socials={socials}
             className="animate-intro-fade mt-[clamp(10px,3svh,32px)]"
             style={{ animationDelay: '820ms' }}

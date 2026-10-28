@@ -1,5 +1,6 @@
 'use client';
-// Quiet ring: the icons never change size. Hover brightens the ring and the icon.
+// Quiet ring (chosen 2026-10-28 from the design lab, replacing the dock): the icons never change
+// size, so nothing grows into the name. Hover brightens the ring and the icon.
 import { linkProps, press, type VariantProps } from './shared';
 
 export default function Quiet({ socials, className, style }: VariantProps) {
