@@ -1,4 +1,4 @@
-// Pieces every social variant shares: the link attributes and the press-in.
+// Pieces for the social icons: the link attributes and the press-in.
 import type { Social } from '@/lib/socials';
 
 export type VariantProps = { socials: Social[]; className?: string; style?: React.CSSProperties };
