@@ -4,8 +4,7 @@
 // no room to grow, and a tap navigates at once.
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'motion/react';
 import { useRef } from 'react';
-
-export type Social = { name: string; url: string; icon: React.ReactNode };
+import type { Social } from '@/lib/socials';
 
 function Item({ mouseX, social }: { mouseX: MotionValue<number>; social: Social }) {
   const ref = useRef<HTMLAnchorElement>(null);
