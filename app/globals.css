@@ -136,6 +136,19 @@
     animation: intro-fade 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
+  /* Now-playing island waking up: a black dot pops in (slight overshoot) before it stretches
+     into the pill (NowPlayingIsland.tsx). Scales from the dot's centre. */
+  @keyframes island-in {
+    0% { opacity: 0; transform: scale(0.3); }
+    55% { opacity: 1; transform: scale(1.08); }
+    100% { opacity: 1; transform: none; }
+  }
+
+  .animate-island-in {
+    animation: island-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+    transform-origin: 20px 20px;
+  }
+
   @keyframes spin-record {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -348,6 +361,7 @@
     .aurora-text,
     .animate-arc,
     .animate-intro-fade,
+    .animate-island-in,
     .animate-spin-record,
     .animate-bar,
     .animate-rise,
