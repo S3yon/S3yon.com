@@ -1,10 +1,15 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, MotionConfig, motion } from 'motion/react';
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'motion/react';
 import { timeAgo, useSpotify } from '@/lib/use-spotify';
 
 const MORPH = { type: 'spring', bounce: 0, visualDuration: 0.35 } as const;
+// The load-in stretch from dot to pill: a touch of bounce, like the island waking on iPhone.
+const BOOT = { type: 'spring', bounce: 0.28, visualDuration: 0.5 } as const;
+// When the dot pops in (matches the intro stagger), and how long it sits before stretching.
+const APPEAR_MS = 1600;
+const DOT_HOLD_MS = 460; // after the 420ms pop finishes, so layout measures an unscaled dot
 
 const fmt = (ms: number) => {
   const s = Math.max(0, Math.round(ms / 1000));
@@ -79,6 +84,22 @@ export default function NowPlayingIsland() {
 
   useEffect(() => () => window.clearTimeout(closeT.current), []);
 
+  // Load-in: the island pops in as a black dot, then stretches into the pill. Reduced motion
+  // skips the dot and the plain fade-in shows the pill straight away.
+  const reduce = useReducedMotion();
+  const hasTrack = Boolean(track?.title);
+  const [booted, setBooted] = useState(false);
+  const morph = booted ? MORPH : BOOT;
+  useEffect(() => {
+    if (!hasTrack || booted) return;
+    if (reduce) return setBooted(true);
+    const t = window.setTimeout(() => setBooted(true), APPEAR_MS + DOT_HOLD_MS);
+    return () => window.clearTimeout(t);
+  }, [hasTrack, booted, reduce]);
+  useEffect(() => {
+    if (open) setBooted(true);
+  }, [open]);
+
   // Nothing from Spotify: no slot. Still loading: keep the slot so the row doesn't jump.
   if (track && !track.title) return null;
 
@@ -92,8 +113,8 @@ export default function NowPlayingIsland() {
         <MotionConfig reducedMotion="user">
           <div
             ref={wrap}
-            className="animate-intro-fade absolute bottom-0 left-0 z-10"
-            style={{ animationDelay: '1600ms' }}
+            className="animate-island-in absolute bottom-0 left-0 z-10"
+            style={{ animationDelay: `${APPEAR_MS}ms` }}
             onPointerEnter={(e) => {
               if (e.pointerType !== 'mouse') return;
               window.clearTimeout(closeT.current);
@@ -116,7 +137,7 @@ export default function NowPlayingIsland() {
             <motion.div
               layout
               data-island={open ? 'open' : 'closed'}
-              transition={MORPH}
+              transition={morph}
               initial={false}
               animate={{ borderRadius: open ? 30 : 20 }}
               style={{ borderRadius: 20 }}
@@ -178,8 +199,12 @@ export default function NowPlayingIsland() {
                       </div>
                     )}
                   </motion.div>
+                ) : !booted ? (
+                  <motion.div key="dot" layout exit={{ opacity: 0, transition: { duration: 0.05 } }}>
+                    <span aria-hidden className="block h-10 w-10" />
+                  </motion.div>
                 ) : (
-                  <motion.div key="pill" layout initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.05, duration: 0.18 } }} exit={{ opacity: 0, transition: { duration: 0.08 } }}>
+                  <motion.div key="pill" layout initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.12, duration: 0.22 } }} exit={{ opacity: 0, transition: { duration: 0.08 } }}>
                     <button
                       ref={btn}
                       type="button"
