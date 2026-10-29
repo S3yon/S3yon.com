@@ -698,6 +698,7 @@ function Rail({
 }
 
 // Year heading sits on the rail: a node on the line, the year aligned with the entry text.
+// useLargeTitles shrinks it into the filter bar as it scrolls under.
 function YearSection({ year, entries }: { year: number; entries: FeedEntry[] }) {
   const { filtered } = useContext(FeedMode);
   return (
@@ -708,7 +709,10 @@ function YearSection({ year, entries }: { year: number; entries: FeedEntry[] }) 
             aria-hidden
             className="absolute left-[11px] top-1/2 z-10 h-[14px] w-[14px] -translate-y-1/2 rounded-full border-2 border-ink/25 bg-paper"
           />
-          <h2 className="font-heading text-[44px] font-extrabold leading-none tracking-[-0.03em] sm:text-[56px]">
+          <h2
+            data-large={year}
+            className="origin-[0%_100%] font-heading text-[44px] font-extrabold leading-none tracking-[-0.03em] will-change-transform sm:text-[56px]"
+          >
             {year}
           </h2>
           <span className="h-px flex-1 bg-rule" aria-hidden />
@@ -878,10 +882,11 @@ function LeadRows({ github, spotify }: { github: GithubStats | null; spotify: Sp
   );
 }
 
-type BarProps = { active: FilterKey; onChange: (key: FilterKey) => void };
+type BarProps = { active: FilterKey; onChange: (key: FilterKey) => void; years: number[] };
 
-// Editorial tab row in the same uppercase micro-label style as the links.
-function Tabs({ active, onChange }: BarProps) {
+// Editorial tab row in the same uppercase micro-label style as the links. Right of the tabs, the
+// year being read: one stacked label per year, faded in and out by useLargeTitles.
+function Tabs({ active, onChange, years }: BarProps) {
   const feed = useFeed();
   return (
     <div className="flex items-end justify-between gap-6">
@@ -916,7 +921,20 @@ function Tabs({ active, onChange }: BarProps) {
           );
         })}
       </nav>
-      <ThemeBolt className="mb-2 ml-1" />
+      <div className="flex shrink-0 items-center gap-4">
+        <span aria-hidden className="grid">
+          {years.map((y) => (
+            <span
+              key={y}
+              data-bar-title={y}
+              className="col-start-1 row-start-1 font-heading text-[17px] font-bold tabular-nums tracking-[-0.01em] text-ink opacity-0"
+            >
+              {y}
+            </span>
+          ))}
+        </span>
+        <ThemeBolt className="mb-2 ml-1" />
+      </div>
     </div>
   );
 }
@@ -1036,6 +1054,58 @@ function FilterBar(props: BarProps & { feedEl: React.RefObject<HTMLDivElement | 
   );
 }
 
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+// Large titles: as a year heading slides under the filter bar it shrinks to half and fades, and
+// the bar's small year fades in; the next heading takes over the same way. One scroll handler,
+// at most once a frame, writing styles straight to the elements (no React render per frame).
+// Reduced motion keeps the fades and drops the scale and slide. Returns a refresh for when the
+// list re-mounts without a scroll (a filter change).
+function useLargeTitles(root: React.RefObject<HTMLElement | null>) {
+  const refresh = useRef(() => {});
+  useEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const line = el.querySelector<HTMLElement>('[data-filter-bar]')?.offsetHeight ?? 0;
+      const heads = [...el.querySelectorAll<HTMLElement>('[data-large]')];
+      const still = reduce.matches;
+      // p: 0 while the heading sits below the bar, 1 once it has slid fully under it. Measured on
+      // its row, which the heading's own transform doesn't move.
+      const ps = heads.map((h) => clamp01((line - h.parentElement!.getBoundingClientRect().top) / (h.offsetHeight * 0.85)));
+      heads.forEach((h, i) => {
+        const p = ps[i];
+        h.style.transform = still ? '' : `translate3d(0, ${(p * h.offsetHeight * 0.3).toFixed(2)}px, 0) scale(${(1 - 0.5 * p).toFixed(3)})`;
+        h.style.opacity = p ? clamp01(1 - p * 1.25).toFixed(2) : '';
+      });
+      // A bar year shows while its heading is docked and the next one hasn't docked yet.
+      const s = (p = 0) => clamp01((p - 0.45) / 0.45);
+      el.querySelectorAll<HTMLElement>('[data-bar-title]').forEach((t) => {
+        const i = heads.findIndex((h) => h.dataset.large === t.dataset.barTitle);
+        const o = i < 0 ? 0 : s(ps[i]) * (1 - s(ps[i + 1]));
+        t.style.opacity = o.toFixed(2);
+        t.style.transform = still ? '' : `translate3d(0, ${((1 - o) * 6).toFixed(2)}px, 0)`;
+      });
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    refresh.current = schedule;
+    update();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, [root]);
+  return refresh;
+}
+
 export default function Feed({ github = null }: { github?: GithubStats | null }) {
   const { data: spotify } = useSpotify();
   // a song a visitor started from the On rotation crate
@@ -1056,6 +1126,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
   const [filter, setFilter] = useState<FilterKey>('all');
   const [filtered, setFiltered] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
+  const refreshTitles = useLargeTitles(topRef);
 
   const groups = useMemo(() => {
     const match = FILTERS.find((f) => f.key === filter)!.match;
@@ -1083,7 +1154,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
   return (
     <FeedMode.Provider value={{ filtered }}>
       <div ref={topRef}>
-        <FilterBar active={filter} onChange={choose} feedEl={topRef} />
+        <FilterBar active={filter} onChange={choose} feedEl={topRef} years={groups.map((g) => g.year)} />
         {/* Crossfade the whole list on a filter change instead of animating each entry. */}
         <AnimatePresence mode="wait" initial={false} onExitComplete={resetScroll}>
           <motion.div
@@ -1092,6 +1163,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
             transition={{ duration: 0.45, ease: EASE }}
+            onAnimationComplete={() => refreshTitles.current()}
             className="relative"
           >
             <Rail
