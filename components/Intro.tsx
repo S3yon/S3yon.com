@@ -30,7 +30,7 @@ export default function Intro() {
         className="relative flex h-[min(100svh,var(--intro-fit,100svh))] flex-col px-6 pb-[max(clamp(12px,3.5svh,40px),env(safe-area-inset-bottom))] pt-[max(clamp(12px,4svh,40px),env(safe-area-inset-top))] sm:px-12"
       >
         <div className="flex min-h-0 flex-1 flex-col justify-center">
-          {/* Thunder charge: a bolt arcs from the cursor to the nearest letter; tap to strike */}
+          {/* Thunder charge: a hovered letter turns yellow; click or tap one to strike it */}
           <ThunderCharge
             text="SEYON SRI"
             size="text-[clamp(44px,min(15.5vw,24svh),220px)] leading-[0.8]"
