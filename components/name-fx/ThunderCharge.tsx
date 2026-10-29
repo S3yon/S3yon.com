@@ -2,11 +2,19 @@
 
 import { useEffect, useRef } from 'react';
 import Letters, { letterEls, prefersReducedMotion } from './Letters';
+import { drawSegs, fitCanvas, forkedBolt, glow, nearest, type Seg } from './bolt';
 
-// Pikachu's move: when the pointer comes near the name, a jagged bolt arcs from the
-// pointer to the nearest letter, which jolts and glows yellow. A tap fires one strike.
-// The whole name also flashes yellow after the intro and when the reader flies back to the top.
-// Scrolling turns the cursor bolt off, so on desktop, as on a phone, the name only lights up then.
+// Pikachu's move. Hover a letter and it turns yellow. Click or tap one and a branching bolt
+// drops on it from the top of the cover: a dim stepped leader feels its way down, the return
+// stroke flashes, sparks kick off the letter and it cools from white-hot through yellow and
+// amber back to chalk. The same strike lands on the middle of the name after the intro and
+// whenever the reader flies back to the top, with a yellow ripple across the other letters.
+// Scrolling turns the hover off, since the name slides under a still cursor.
+const COOL = ['255,246,214', '246,206,58', '232,119,58']; // white-hot, yellow, amber
+const HOVER = 48; // px from a letter's core that still counts as over it
+const LEADER = 110; // ms for the leader to reach the letter
+const COOLING = 1600;
+
 export default function ThunderCharge({
   text,
   size,
@@ -25,146 +33,149 @@ export default function ThunderCharge({
   useEffect(() => {
     const el = wrap.current;
     const cv = canvas.current;
-    if (!el || !cv || prefersReducedMotion()) return;
-    const ctx = cv.getContext('2d')!;
+    if (!el || !cv) return;
     const letters = letterEls(name.current);
-    let raf = 0;
-    let px = 0;
-    let py = 0;
-    let active = false;
-    let until = 0;
-    let lastBolt = 0;
-    let target: HTMLSpanElement | null = null;
-    let bolt: [number, number][] = [];
+    const struck: number[] = []; // when each letter was last hit
+    let over = -1;
 
-    const size = () => {
-      const r = cv.getBoundingClientRect();
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      cv.width = Math.round(r.width * dpr);
-      cv.height = Math.round(r.height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    size();
-
-    const jag = (x1: number, y1: number, x2: number, y2: number) => {
-      const out: [number, number][] = [[x1, y1]];
-      const steps = Math.max(4, Math.round(Math.hypot(x2 - x1, y2 - y1) / 16));
-      const nx = -(y2 - y1);
-      const ny = x2 - x1;
-      const len = Math.hypot(nx, ny) || 1;
-      for (let i = 1; i < steps; i++) {
-        const t = i / steps;
-        const off = (Math.random() - 0.5) * 22 * Math.sin(Math.PI * t);
-        out.push([x1 + (x2 - x1) * t + (nx / len) * off, y1 + (y2 - y1) * t + (ny / len) * off]);
-      }
-      out.push([x2, y2]);
-      return out;
-    };
-
-    const setTarget = (next: HTMLSpanElement | null) => {
-      if (target === next) return;
-      if (target) {
-        target.style.color = '';
-        target.style.textShadow = '';
-        target.style.transform = '';
-      }
-      target = next;
-      if (target) {
-        target.style.color = '#F6CE3A';
-        target.style.textShadow = '0 0 18px rgba(246,206,58,0.75)';
-      }
-    };
-
-    const frame = (now: number) => {
-      const box = cv.getBoundingClientRect();
-      ctx.clearRect(0, 0, box.width, box.height);
-      if (!active && now > until) {
-        setTarget(null);
-        raf = 0;
-        return;
-      }
-      // nearest letter within reach
-      let best: HTMLSpanElement | null = null;
-      let bd = Infinity;
-      let bx = 0;
-      let by = 0;
-      for (const l of letters) {
-        const r = l.getBoundingClientRect();
-        const cx = Math.max(r.left + r.width * 0.2, Math.min(px, r.right - r.width * 0.2));
-        const cy = Math.max(r.top + r.height * 0.25, Math.min(py, r.bottom - r.height * 0.25));
-        const d = Math.hypot(cx - px, cy - py);
-        if (d < bd) {
-          bd = d;
-          best = l;
-          bx = cx - box.left;
-          by = cy - box.top;
+    // a cooling letter keeps its strike colour; otherwise the hovered one is yellow
+    const paint = (now: number) => {
+      let busy = false;
+      letters.forEach((l, i) => {
+        const a = now - (struck[i] ?? -1e9) - LEADER;
+        if (a >= 0 && a < COOLING) {
+          busy = true;
+          const u = a / COOLING;
+          const stop = COOL[Math.min(2, Math.floor(u * 3))];
+          l.style.transition = 'none';
+          l.style.color = `color-mix(in srgb, rgb(${stop}) ${Math.round((1 - u) * 100)}%, rgb(var(--chalk)))`;
+          l.style.textShadow = `0 0 ${Math.round(28 * (1 - u))}px rgba(${stop},${(0.8 * (1 - u)).toFixed(2)})`;
+          return;
         }
-      }
-      const reach = 180;
-      if (best && bd < reach) {
-        setTarget(best);
-        if (now - lastBolt > 55) {
-          bolt = jag(px - box.left, py - box.top, bx, by);
-          lastBolt = now;
-          best.style.transform = `translate(${(Math.random() * 3 - 1.5).toFixed(1)}px, ${(Math.random() * 3 - 1.5).toFixed(1)}px)`;
+        if (a < 0 && a > -LEADER) busy = true; // the leader is still on its way down
+        l.style.transition = '';
+        if (i === over) {
+          l.style.color = '#F6CE3A';
+          l.style.textShadow = '0 0 18px rgba(246,206,58,0.75)';
+        } else if (l.style.color) {
+          l.style.color = '';
+          l.style.textShadow = '';
         }
-        ctx.lineJoin = 'round';
-        ctx.lineCap = 'round';
-        for (const [w, col] of [
-          [10, 'rgba(246,206,58,0.18)'],
-          [4, 'rgba(246,206,58,0.7)'],
-          [1.6, 'rgba(255,252,235,1)'],
-        ] as const) {
-          ctx.strokeStyle = col;
-          ctx.lineWidth = w;
-          ctx.beginPath();
-          bolt.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-          ctx.stroke();
-        }
-      } else {
-        setTarget(null);
-      }
-      raf = requestAnimationFrame(frame);
+      });
+      return busy;
     };
 
-    const start = () => {
-      if (!raf) raf = requestAnimationFrame(frame);
+    const hover = (i: number) => {
+      if (i === over) return;
+      over = i;
+      paint(performance.now());
     };
     const move = (e: PointerEvent) => {
-      px = e.clientX;
-      py = e.clientY;
-      active = e.pointerType === 'mouse';
-      start();
+      if (e.pointerType !== 'mouse') return;
+      const hit = nearest(letters, e.clientX, e.clientY);
+      hover(hit && hit.d < HOVER ? hit.i : -1);
     };
+    const leave = () => hover(-1);
+    window.addEventListener('pointermove', move);
+    document.addEventListener('pointerleave', leave);
+
+    // a colour change is not motion, so reduced motion keeps the hover and drops the strikes
+    if (prefersReducedMotion()) {
+      window.addEventListener('scroll', leave, { passive: true });
+      return () => {
+        window.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerleave', leave);
+        window.removeEventListener('scroll', leave);
+        over = -1;
+        paint(-1e9);
+      };
+    }
+
+    const ctx = cv.getContext('2d')!;
+    let box = fitCanvas(cv, ctx);
+    let raf = 0;
+    let strike: { segs: Seg[]; t: number; x: number; y: number } | null = null;
+    let sparks: { x: number; y: number; vx: number; vy: number; t: number }[] = [];
+    let lastStrike = -1e9;
+
+    const frame = (now: number) => {
+      box = cv.getBoundingClientRect();
+      ctx.clearRect(0, 0, box.width, box.height);
+      if (strike) {
+        const age = now - strike.t;
+        if (age < LEADER) {
+          // stepped leader: only the part above the current tip, dim
+          const tip = strike.y * (age / LEADER);
+          drawSegs(ctx, strike.segs.filter((s) => Math.max(s.a[1], s.b[1]) <= tip), 0.35, 0.7);
+        } else {
+          // return stroke, then one re-strike, then gone (two flashes, under three a second)
+          const t = age - LEADER;
+          const pulse = t < 70 ? 1 : t < 140 ? 0.25 : t < 210 ? 0.8 : Math.max(0, 0.8 - (t - 210) / 180);
+          if (pulse > 0) {
+            drawSegs(ctx, strike.segs, pulse, 1.25);
+            // the sky glow stays inside the canvas, or its cut-off edge shows as a hard line
+            const sky = Math.max(0, Math.min(420, strike.x, box.width - strike.x, box.height - strike.y * 0.6));
+            glow(ctx, strike.x, strike.y * 0.6, sky, 0.07 * pulse);
+            glow(ctx, strike.x, strike.y, 60, 0.4 * pulse);
+          } else strike = null;
+        }
+      }
+      sparks = sparks.filter((s) => now - s.t < LEADER + 310);
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (const s of sparks) {
+        const t = now - s.t - LEADER; // sparks fly on the return stroke
+        if (t < 0) continue;
+        const x = s.x + s.vx * t;
+        const y = s.y + s.vy * t + 0.0006 * t * t;
+        ctx.strokeStyle = `rgba(255,236,170,${(1 - t / 310).toFixed(3)})`;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - s.vx * 18, y - s.vy * 18);
+        ctx.stroke();
+      }
+      ctx.restore();
+      const busy = paint(now) || !!strike || sparks.length > 0;
+      raf = busy ? requestAnimationFrame(frame) : 0;
+    };
+
+    const fire = (i: number) => {
+      const now = performance.now();
+      box = cv.getBoundingClientRect();
+      const r = letters[i].getBoundingClientRect();
+      const x = r.left + r.width * (0.35 + Math.random() * 0.3) - box.left;
+      const y = r.top + r.height * 0.18 - box.top;
+      strike = { segs: forkedBolt([x + (Math.random() - 0.5) * 220, 0], [x, y], { passes: 7, rough: 0.1, forks: 0.55 }), t: now, x, y };
+      lastStrike = now;
+      struck[i] = now;
+      for (let j = 0; j < 10; j++) {
+        const a = -Math.PI * (0.1 + Math.random() * 0.8);
+        const s = 0.15 + Math.random() * 0.35;
+        sparks.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: now });
+      }
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+
+    // click with a mouse, or tap: strike the letter under the pointer
     const down = (e: PointerEvent) => {
-      px = e.clientX;
-      py = e.clientY;
-      until = performance.now() + 450;
-      start();
+      const hit = nearest(letters, e.clientX, e.clientY);
+      if (hit && performance.now() - lastStrike > 700) fire(hit.i);
     };
-    const leave = () => {
-      active = false;
-    };
-    // listen page-wide so the bolt reaches out as the cursor approaches from outside
-    // Full-name flash: a bolt drops onto the middle of the name and a yellow charge ripples
-    // across every letter, left to right. Fired once after the intro animation, and again
-    // whenever the reader flies back up to the top.
+
+    // full-name strike: the bolt lands on the middle letter and a yellow charge ripples
+    // across the rest, left to right
     let lastFlash = -Infinity;
     const flash = () => {
       const now = performance.now();
       if (now - lastFlash < 2500) return;
       lastFlash = now;
-      const mid = letters[Math.floor(letters.length / 2)];
-      if (mid) {
-        const r = mid.getBoundingClientRect();
-        px = r.left + r.width / 2 + (Math.random() - 0.5) * 30;
-        py = r.top - 150;
-        until = now + 380;
-        start();
-      }
+      const mid = Math.floor(letters.length / 2);
+      if (letters[mid]) fire(mid);
       // the letters' resting colour, read live so it follows the intro's look and theme
       const rest = name.current ? getComputedStyle(name.current).color : '#C8C7C3';
       letters.forEach((l, i) => {
+        if (i === mid) return; // the struck letter cools on its own
         l.animate(
           [
             { color: rest, textShadow: '0 0 0 rgba(246,206,58,0)' },
@@ -172,7 +183,7 @@ export default function ThunderCharge({
             { color: '#F6CE3A', textShadow: '0 0 14px rgba(246,206,58,0.5)', offset: 0.55 },
             { color: rest, textShadow: '0 0 0 rgba(246,206,58,0)' },
           ],
-          { duration: 900, delay: 80 + i * 45, easing: 'ease-out' }
+          { duration: 900, delay: LEADER + Math.abs(i - mid) * 45, easing: 'ease-out' }
         );
       });
     };
@@ -185,9 +196,7 @@ export default function ThunderCharge({
     let lastT = performance.now();
     let upSpeed = 0;
     const onScroll = () => {
-      // the cursor bolt stays off while scrolling (the name slides under a still cursor);
-      // the next pointer move turns it back on
-      active = false;
+      leave();
       const now = performance.now();
       const y = window.scrollY;
       const v = (lastY - y) / Math.max(1, now - lastT);
@@ -199,28 +208,37 @@ export default function ThunderCharge({
         flash();
       }
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
 
-    window.addEventListener('pointermove', move);
+    // the canvas follows the name's width, which changes when the web font replaces the
+    // fallback after mount; refit then too, or the bitmap stretches and bolts miss the letters
+    const resize = () => {
+      box = fitCanvas(cv, ctx);
+    };
+    const ro = new ResizeObserver(resize);
+    ro.observe(cv);
+    window.addEventListener('scroll', onScroll, { passive: true });
     el.addEventListener('pointerdown', down);
-    document.addEventListener('pointerleave', leave);
-    window.addEventListener('resize', size);
     return () => {
+      ro.disconnect();
       window.removeEventListener('pointermove', move);
-      window.removeEventListener('scroll', onScroll);
-      window.clearTimeout(introFlash);
-      el.removeEventListener('pointerdown', down);
       document.removeEventListener('pointerleave', leave);
-      window.removeEventListener('resize', size);
+      window.removeEventListener('scroll', onScroll);
+      el.removeEventListener('pointerdown', down);
+      window.clearTimeout(introFlash);
       cancelAnimationFrame(raf);
-      setTarget(null);
+      over = -1;
+      paint(-1e9);
     };
   }, []);
 
   return (
     <div ref={wrap} className={`relative touch-manipulation ${className}`} style={style}>
-      {/* overhangs the name so a bolt can reach out to a cursor that is still approaching */}
-      <canvas ref={canvas} aria-hidden className="pointer-events-none absolute -inset-[140px] z-10 h-[calc(100%+280px)] w-[calc(100%+280px)]" />
+      {/* reaches up past the top of the cover so a strike can fall from there */}
+      <canvas
+        ref={canvas}
+        aria-hidden
+        className="pointer-events-none absolute -bottom-[60px] -left-[140px] -right-[140px] -top-[46svh] z-10 h-[calc(100%+46svh+60px)] w-[calc(100%+280px)]"
+      />
       <Letters ref={name} text={text} size={size} className="[&>span]:transition-[color,text-shadow] [&>span]:duration-150" />
     </div>
   );
