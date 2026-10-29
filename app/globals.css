@@ -297,6 +297,52 @@
     to { background-position: 100% 0; }
   }
 
+  /* Glass filter bar (FilterBar in components/Feed.tsx): paper-tinted blur, light catching both
+     edges. Chromium adds a lens through the #glass-refract SVG filter (data-refract="on"); other
+     browsers keep the plain frosted glass. */
+  .glass-bar {
+    background: rgb(var(--paper) / 0.5);
+    -webkit-backdrop-filter: blur(14px) saturate(1.8);
+    backdrop-filter: blur(14px) saturate(1.8);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.75),
+      inset 0 -1px 0 rgb(255 255 255 / 0.45),
+      0 1px 0 rgb(var(--ink) / 0.04);
+  }
+  .dark .glass-bar {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      inset 0 -1px 0 rgb(255 255 255 / 0.06);
+  }
+  /* blur + lens displacement + saturate, all inside the SVG filter */
+  .glass-bar[data-refract='on'] {
+    background: rgb(var(--paper) / 0.38);
+    backdrop-filter: url(#glass-refract);
+  }
+  /* a soft scroll edge under the bar instead of a hairline */
+  .glass-bar-edge {
+    background: linear-gradient(to bottom, rgb(var(--paper) / 0.45), rgb(var(--paper) / 0));
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+    mask-image: linear-gradient(to bottom, #000, transparent);
+  }
+  /* No backdrop blur at all, or the reader asked for less transparency: solid paper, hairline. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-bar { background: rgb(var(--paper)); box-shadow: 0 1px 0 rgb(var(--rule)); }
+    .glass-bar-edge { display: none; }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    .glass-bar,
+    .glass-bar[data-refract='on'] {
+      background: rgb(var(--paper));
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      box-shadow: 0 1px 0 rgb(var(--rule));
+    }
+    .glass-bar-edge { display: none; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .thunder-ring,
     .aurora-text,

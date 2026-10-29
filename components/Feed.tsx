@@ -880,14 +880,14 @@ function LeadRows({ github, spotify }: { github: GithubStats | null; spotify: Sp
 
 type BarProps = { active: FilterKey; onChange: (key: FilterKey) => void };
 
-// Editorial tab row on a hairline, in the same uppercase micro-label style as the links.
+// Editorial tab row in the same uppercase micro-label style as the links.
 function Tabs({ active, onChange }: BarProps) {
   const feed = useFeed();
   return (
-    <div className="flex items-end justify-between gap-6 border-b border-rule">
+    <div className="flex items-end justify-between gap-6">
       <nav
         aria-label="Filter timeline"
-        className="-mb-px flex min-w-0 gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
+        className="flex min-w-0 gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
       >
         {FILTERS.map((f) => {
           const on = f.key === active;
@@ -898,11 +898,11 @@ function Tabs({ active, onChange }: BarProps) {
               aria-pressed={on}
               onClick={() => onChange(f.key)}
               className={`relative shrink-0 pb-3.5 pt-5 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] transition-colors duration-300 ${
-                on ? 'text-ink' : 'text-faint hover:text-ink/70'
+                on ? 'text-ink' : 'text-ink/55 hover:text-ink/80'
               }`}
             >
               {f.label}
-              <span className="ml-1.5 font-sans text-[11px] font-medium tracking-normal tabular-nums text-faint">
+              <span className="ml-1.5 font-sans text-[11px] font-medium tracking-normal tabular-nums text-ink/45">
                 {feed.filter(f.match).length}
               </span>
               {on && (
@@ -946,26 +946,92 @@ function useBarPlace(feedEl: React.RefObject<HTMLElement | null>) {
   return place;
 }
 
+const BEZEL = 14; // px of lens at the bar's top and bottom edge
+const LENS = 26; // feDisplacementMap scale
+
+// The glass bar's lens: a 1px-wide column, stretched across the bar. Green = vertical
+// displacement: near the top edge it samples from below and near the bottom from above, the way
+// a convex glass edge bends what is behind it. Red stays neutral (no horizontal shift).
+function lensMap(h: number) {
+  const c = document.createElement('canvas');
+  c.width = 1;
+  c.height = h;
+  const ctx = c.getContext('2d')!;
+  const img = ctx.createImageData(1, h);
+  const b = Math.min(BEZEL, h / 2);
+  for (let y = 0; y < h; y++) {
+    const top = y + 0.5;
+    const bottom = h - y - 0.5;
+    let d = 0;
+    if (top < b) d = (1 - top / b) ** 2;
+    else if (bottom < b) d = -((1 - bottom / b) ** 2);
+    const i = y * 4;
+    img.data[i] = 128;
+    img.data[i + 1] = Math.round(128 + 127 * d);
+    img.data[i + 2] = 128;
+    img.data[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return c.toDataURL();
+}
+
+// Chromium only: backdrop-filter: url() renders there. Safari and Firefox keep the plain frosted
+// glass from globals.css (.glass-bar), so they never get the lens.
+function useLens(el: React.RefObject<HTMLElement | null>) {
+  const [lens, setLens] = useState<{ w: number; h: number; map: string } | null>(null);
+  useEffect(() => {
+    const bar = el.current;
+    const brands = (navigator as Navigator & { userAgentData?: { brands: { brand: string }[] } }).userAgentData?.brands ?? [];
+    if (!bar || !brands.some((b) => /Chromium|Google Chrome/.test(b.brand))) return;
+    const ro = new ResizeObserver(() => {
+      const w = Math.round(bar.offsetWidth);
+      const h = Math.round(bar.offsetHeight);
+      if (w && h) setLens((l) => (l && l.w === w && l.h === h ? l : { w, h, map: lensMap(h) }));
+    });
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [el]);
+  return lens;
+}
+
 // Nothing sits in the page: a tab row there rode up on the panel over the intro. Once the panel
 // covers the screen, a position: fixed bar with the theme bolt slides in, until the feed ends.
 // A sticky bar shook on iPhone (WebKit repaints sticky elements while the toolbar collapses); a
 // fixed one doesn't. Parked above the top it is also invisible, or the overscroll bounce at the
 // top of the page pulls it into view; visibility rides the transition so it flips off only
 // after the slide-out.
+// The bar is glass: paper-tinted blur with bright hairline edges and a soft scroll edge below,
+// and in Chromium a lens that bends the entries at its edges. The edge is the glass's sibling,
+// not its child: a backdrop-filter element only lets its children blur what is inside it.
 function FilterBar(props: BarProps & { feedEl: React.RefObject<HTMLDivElement | null> }) {
   const { feedEl, ...bar } = props;
   const place = useBarPlace(feedEl);
   const shown = place.past && !place.ended;
+  const glass = useRef<HTMLDivElement>(null);
+  const lens = useLens(glass);
   return (
     <div
       data-filter-bar
       aria-hidden={!shown}
       inert={!shown}
-      className={`fixed inset-x-0 top-0 z-30 bg-paper pt-[env(safe-area-inset-top)] transition-[transform,visibility] duration-300 ease-out ${shown ? 'visible translate-y-0' : 'invisible -translate-y-full'}`}
+      className={`fixed inset-x-0 top-0 z-30 transition-[transform,visibility] duration-300 ease-out ${shown ? 'visible translate-y-0' : 'invisible -translate-y-full'}`}
     >
-      <div className="mx-auto max-w-4xl px-5 sm:px-8">
-        <Tabs {...bar} />
+      <div ref={glass} className="glass-bar pt-[env(safe-area-inset-top)]" data-refract={lens ? 'on' : 'off'}>
+        <div className="mx-auto max-w-4xl px-5 sm:px-8">
+          <Tabs {...bar} />
+        </div>
       </div>
+      <div aria-hidden className="glass-bar-edge pointer-events-none absolute inset-x-0 top-full h-6" />
+      {lens && (
+        <svg aria-hidden width="0" height="0" className="absolute">
+          <filter id="glass-refract" x="0" y="0" width={lens.w} height={lens.h} filterUnits="userSpaceOnUse" colorInterpolationFilters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="soft" />
+            <feImage href={lens.map} x="0" y="0" width={lens.w} height={lens.h} preserveAspectRatio="none" result="map" />
+            <feDisplacementMap in="soft" in2="map" scale={LENS} xChannelSelector="R" yChannelSelector="G" result="bent" />
+            <feColorMatrix in="bent" type="saturate" values="1.8" />
+          </filter>
+        </svg>
+      )}
     </div>
   );
 }
