@@ -1,4 +1,4 @@
-import NowPlaying from './NowPlaying';
+import NowPlayingIsland from './NowPlayingIsland';
 import ThunderCharge from './name-fx/ThunderCharge';
 import IntroGlow from './IntroGlow';
 import IntroFit from './IntroFit';
@@ -80,7 +80,7 @@ export default function Intro() {
             </span>
           </a>
           <div className="min-w-0 sm:col-start-1 sm:row-start-1">
-            <NowPlaying />
+            <NowPlayingIsland />
           </div>
         </div>
       </div>
