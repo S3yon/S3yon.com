@@ -156,6 +156,17 @@
     animation-delay: var(--bar-delay, 0s);
   }
 
+  /* now-playing island while the first fetch is out: the bars rise one after another */
+  @keyframes bar-wait {
+    0%, 60%, 100% { transform: scaleY(0.25); opacity: 0.45; }
+    30% { transform: scaleY(0.75); opacity: 1; }
+  }
+
+  .animate-bar-wait {
+    animation: bar-wait 1.2s ease-in-out infinite;
+    animation-delay: var(--bar-delay, 0s);
+  }
+
   @keyframes rise {
     from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: none; }
@@ -350,6 +361,7 @@
     .animate-intro-fade,
     .animate-spin-record,
     .animate-bar,
+    .animate-bar-wait,
     .animate-rise,
     .animate-scroll-cue,
     .animate-live-ring,
