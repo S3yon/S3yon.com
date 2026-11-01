@@ -13,24 +13,28 @@ const FADE = {
   animate: { opacity: 1, transition: { delay: 0.05, duration: 0.2 } },
   exit: { opacity: 0, transition: { duration: 0.1 } },
 } as const;
+// Album tint wash from the top-left corner; a mask, so its colour can transition between tracks.
+const WASH = 'radial-gradient(140% 160% at 0% 0%, #000, transparent 62%)';
 
 const fmt = (ms: number) => {
   const s = Math.max(0, Math.round(ms / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 };
 
-// Equalizer: moves only while a track is actually playing. While loading, the bars rise one after
-// another instead, left to right. Both are off under reduced motion (globals.css).
-function Bars({ playing, loading = false, big = false }: { playing: boolean; loading?: boolean; big?: boolean }) {
+// Equalizer, in the cover's colour once it is known: moves only while a track is actually playing.
+// While loading, the bars rise one after another instead, left to right. Both are off under
+// reduced motion (globals.css).
+function Bars({ playing, loading = false, big = false, color }: { playing: boolean; loading?: boolean; big?: boolean; color?: string }) {
   const rest = [40, 70, 55, 30];
   return (
     <motion.span aria-hidden className={`flex shrink-0 items-end gap-[3px] ${big ? 'h-4' : 'h-3'}`} {...FADE}>
       {rest.map((h, i) => (
         <span
           key={i}
-          className={`w-[3px] origin-bottom rounded-full bg-chalk/80 ${loading ? 'animate-bar-wait' : playing ? 'animate-bar' : ''}`}
+          className={`w-[3px] origin-bottom rounded-full transition-colors duration-500 ${color ? '' : 'bg-chalk/80'} ${loading ? 'animate-bar-wait' : playing ? 'animate-bar' : ''}`}
           style={
             {
+              backgroundColor: color,
               height: playing || loading ? '100%' : `${h}%`,
               '--bar-duration': `${(0.8 + i * 0.17).toFixed(2)}s`,
               '--bar-delay': `${(i * (loading ? 0.14 : 0.13)).toFixed(2)}s`,
@@ -108,6 +112,10 @@ export default function NowPlayingIsland() {
   const playing = Boolean(track?.isPlaying);
   const label = playing ? 'NOW PLAYING' : 'LAST PLAYED';
   const dur = track?.durationMs ?? 0;
+  // Album tint (chosen 2026-10-30 in a lab): the bars, progress and a soft wash from the top-left
+  // corner take the cover's colour, the way the iPhone tints its music island. Chalk until known.
+  const { tint } = cover;
+  const accent = tint ? `rgb(${tint})` : undefined;
 
   return (
     <div className="relative h-10">
@@ -146,8 +154,13 @@ export default function NowPlayingIsland() {
                 animate={{ borderRadius: open ? 30 : 20 }}
                 exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
                 style={{ borderRadius: 20, transformOrigin: '0% 50%' }}
-                className="overflow-hidden bg-black text-chalk shadow-[0_18px_40px_-18px_rgba(0,0,0,0.9)] ring-1 ring-white/[0.06]"
+                className="relative isolate overflow-hidden bg-black text-chalk shadow-[0_18px_40px_-18px_rgba(0,0,0,0.9)] ring-1 ring-white/[0.06]"
               >
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 -z-10 transition-colors duration-500"
+                  style={{ backgroundColor: tint ? `rgba(${tint},0.32)` : 'rgba(0,0,0,0)', maskImage: WASH, WebkitMaskImage: WASH }}
+                />
                 {/* Only the cover-free parts fade (FADE); the containers holding the cover never do. */}
                 <AnimatePresence mode="popLayout" initial={false}>
                   {!track?.title || !ready ? (
@@ -169,19 +182,19 @@ export default function NowPlayingIsland() {
                       >
                         <Cover src={cover.src} big />
                         <motion.span className="min-w-0 flex-1" {...FADE}>
-                          <span className="block font-display text-[10.5px] tracking-[0.2em] text-chalk/45">{label}</span>
+                          <span className="block font-display text-[10.5px] tracking-[0.2em] text-chalk/45 transition-colors duration-500" style={accent ? { color: accent, opacity: 0.85 } : undefined}>{label}</span>
                           <span className="mt-1 block truncate font-heading text-[16px] font-bold tracking-[-0.01em] text-chalk">{track.title}</span>
                           <span className="block truncate text-[13px] text-chalk/60">{track.artist}</span>
                         </motion.span>
-                        <Bars playing={playing} big />
+                        <Bars playing={playing} big color={accent} />
                       </button>
                       {dur > 0 ? (
                         <motion.div className="mt-4" {...FADE}>
                           <div className="h-1 overflow-hidden rounded-full bg-chalk/15">
                             <div
                               data-progress
-                              className={`h-full origin-left rounded-full transition-transform duration-500 ease-linear motion-reduce:transition-none bg-chalk/85`}
-                              style={{ transform: `scaleX(${progress.toFixed(3)})` }}
+                              className={`h-full origin-left rounded-full transition-[transform,background-color] duration-500 ease-linear motion-reduce:transition-none ${accent ? '' : 'bg-chalk/85'}`}
+                              style={{ transform: `scaleX(${progress.toFixed(3)})`, backgroundColor: accent }}
                             />
                           </div>
                           <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-chalk/45">
@@ -218,7 +231,7 @@ export default function NowPlayingIsland() {
                         className="flex h-10 items-center gap-10 pl-1.5 pr-4 outline-none focus-visible:ring-2 focus-visible:ring-chalk/40"
                       >
                         <Cover src={cover.src} big={false} />
-                        <Bars playing={playing} />
+                        <Bars playing={playing} color={accent} />
                       </button>
                     </motion.div>
                   )}
