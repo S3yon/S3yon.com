@@ -43,6 +43,18 @@ export const feed: FeedEntry[] = [
   },
   {
     year: 2026,
+    month: 'October',
+    title: 'Marketing Lead',
+    org: 'BearHacks',
+    logo: '/logos/bearhacks.svg',
+    orgUrl: 'https://www.bearhacks.com/',
+    kind: 'community',
+    current: true,
+    description:
+      "Marketing lead again for BearHacks 2027, April 23 to 25. Running sponsor outreach and auditing last year's sponsorship package.",
+  },
+  {
+    year: 2026,
     month: 'September',
     title: 'A Future Beyond Hackathons: Cross Collaboration in the Professional World',
     org: 'GDG Sheridan',
