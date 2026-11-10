@@ -182,7 +182,7 @@ export default function NowPlayingIsland() {
                       >
                         <Cover src={cover.src} big />
                         <motion.span className="min-w-0 flex-1" {...FADE}>
-                          <span className="block font-display text-[10.5px] tracking-[0.2em] text-chalk/45 transition-colors duration-500" style={accent ? { color: accent, opacity: 0.85 } : undefined}>{label}</span>
+                          <span className="block font-display text-[10.5px] tracking-[0.2em] text-chalk/60 transition-colors duration-500" style={accent ? { color: accent, opacity: 0.85 } : undefined}>{label}</span>
                           <span className="mt-1 block truncate font-heading text-[16px] font-bold tracking-[-0.01em] text-chalk">{track.title}</span>
                           <span className="block truncate text-[13px] text-chalk/60">{track.artist}</span>
                         </motion.span>
@@ -197,13 +197,13 @@ export default function NowPlayingIsland() {
                               style={{ transform: `scaleX(${progress.toFixed(3)})`, backgroundColor: accent }}
                             />
                           </div>
-                          <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-chalk/45">
+                          <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-chalk/60">
                             <span>{fmt(progress * dur)}</span>
                             <span>-{fmt((1 - progress) * dur)}</span>
                           </div>
                         </motion.div>
                       ) : (
-                        <motion.p className="mt-3 text-[12px] text-chalk/45" {...FADE}>
+                        <motion.p className="mt-3 text-[12px] text-chalk/60" {...FADE}>
                           Played {timeAgo(track.playedAt)}
                         </motion.p>
                       )}

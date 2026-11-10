@@ -53,13 +53,13 @@ export default function Intro() {
                 className="animate-intro-fade border-l border-chalk/15 pl-4"
                 style={{ animationDelay: `${1050 + i * 90}ms` }}
               >
-                <dt className="font-display text-[11px] tracking-[0.22em] text-chalk/40">
+                <dt className="font-display text-[11px] tracking-[0.22em] text-chalk/65">
                   {note.label}
                 </dt>
                 <dd className="mt-1.5 text-[16px] leading-tight text-chalk sm:text-[17px]">
                   {note.value}
                 </dd>
-                <dd className="mt-0.5 text-[13.5px] text-chalk/45 [@media(max-height:600px)]:hidden">{note.sub}</dd>
+                <dd className="mt-0.5 text-[13.5px] text-chalk/65 [@media(max-height:600px)]:hidden">{note.sub}</dd>
               </div>
             ))}
           </dl>

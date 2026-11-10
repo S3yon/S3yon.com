@@ -8,7 +8,7 @@
     --paper: 244 243 240;
     --ink: 24 24 26;
     --muted: 97 97 95;
-    --faint: 147 147 143;
+    --faint: 110 110 106;
     --rule: 222 220 215;
     --accent: 180 80 42;
     /* intro world: the same in both themes unless an intro look overrides them */
@@ -22,7 +22,7 @@
     --paper: 22 22 24;
     --ink: 236 235 231;
     --muted: 165 164 160;
-    --faint: 118 117 113;
+    --faint: 130 129 125;
     --rule: 48 48 51;
     --accent: 214 112 70;
   }
