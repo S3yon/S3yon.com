@@ -3,6 +3,7 @@ import { Anton, Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { themeBootScript } from "@/lib/theme-boot";
 import { scrollBootScript } from "@/lib/scroll-boot";
+import { SITE_URL } from "@/lib/site";
 
 const display = Anton({
   subsets: ["latin"],
@@ -21,10 +22,28 @@ const sans = Instrument_Sans({
   variable: "--font-sans",
 });
 
+const DESCRIPTION =
+  "Seyon Sri — Software Engineer Intern at Scotiabank. Data pipelines, diagnostic AI, and full-stack products shipped from hackathon to deploy.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Seyon Sri",
-  description:
-    "Seyon Sri — Software Engineer Intern at Scotiabank. Data pipelines, diagnostic AI, and full-stack products shipped from hackathon to deploy.",
+  description: DESCRIPTION,
+  openGraph: {
+    type: "profile",
+    siteName: "Seyon Sri",
+    title: "Seyon Sri",
+    description: DESCRIPTION,
+    locale: "en_CA",
+    firstName: "Seyon",
+    lastName: "Sri",
+  },
+  twitter: {
+    card: "summary",
+    title: "Seyon Sri",
+    description: DESCRIPTION,
+    creator: "@s3yon_",
+  },
   applicationName: "Seyon Sri",
   // iOS home-screen app: full screen, content runs under a translucent status bar
   appleWebApp: { capable: true, title: "Seyon", statusBarStyle: "black-translucent" },
