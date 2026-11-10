@@ -859,7 +859,7 @@ function LeadRows({ github, spotify }: { github: GithubStats | null; spotify: Sp
             </span>
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-accent sm:pt-2">Next up</p>
             <div className="min-w-0">
-              <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] text-ink/60 sm:text-[21px]">
+              <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] text-ink/65 sm:text-[21px]">
                 {next.event.url ? (
                   <a href={next.event.url} target="_blank" rel="noopener noreferrer" className="underline decoration-2 decoration-rule underline-offset-[5px] transition-colors hover:decoration-accent">
                     {next.event.title}
@@ -903,11 +903,11 @@ function Tabs({ active, onChange, years }: BarProps) {
               aria-pressed={on}
               onClick={() => onChange(f.key)}
               className={`relative shrink-0 pb-3.5 pt-5 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] transition-colors duration-300 ${
-                on ? 'text-ink' : 'text-ink/55 hover:text-ink/80'
+                on ? 'text-ink' : 'text-ink/65 hover:text-ink/85'
               }`}
             >
               {f.label}
-              <span className="ml-1.5 font-sans text-[11px] font-medium tracking-normal tabular-nums text-ink/45">
+              <span className="ml-1.5 font-sans text-[11px] font-medium tracking-normal tabular-nums text-ink/[0.62]">
                 {feed.filter(f.match).length}
               </span>
               {on && (
