@@ -357,6 +357,12 @@ export const upcoming: UpcomingEvent[] = [
     title: 'Sheridan Datathon 2026 @ GDG Sheridan',
     detail: '24-hour data hackathon for 250+ students at Sheridan HMC, turning real industry datasets into insights.',
     url: 'https://gdg.community.dev/events/details/google-gdg-on-campus-sheridan-college-trafalgar-road-campus-oakville-canada-presents-get-into-gear-sheridan-datathon-2026/',
+    feedTitle: 'Sheridan Datathon 2026',
+    recap:
+      "Led the 8-person media team for Sheridan's 24-hour data hackathon, 5 photographers and 3 videographers. Built the shift plan so every block had a photographer and a videographer on it. Designed the photobooth frame and cut the closing video.",
+    org: 'GDG Sheridan',
+    logo: '/logos/gdgsheridan.png',
+    orgUrl: 'https://www.gdgsheridan.com/',
   },
   {
     date: '2026-11-14',
