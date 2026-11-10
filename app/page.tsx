@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Campfire, { CampGlow } from '@/components/ditto/Campfire';
 import CampLinks from '@/components/ditto/CampLinks';
 import Feed from '@/components/Feed';
@@ -9,6 +10,9 @@ import { getGithubStats } from '@/lib/github';
 
 // Refresh the GitHub counts every hour.
 export const revalidate = 3600;
+
+// Each page names its own canonical address (layout-level would stamp "/" on every route).
+export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 export default async function Home() {
   const github = await getGithubStats();
