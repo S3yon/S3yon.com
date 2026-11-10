@@ -3,6 +3,7 @@ import Campfire, { CampGlow } from '@/components/ditto/Campfire';
 import CampLinks from '@/components/ditto/CampLinks';
 import Feed from '@/components/Feed';
 import Intro from '@/components/Intro';
+import InviteMe from '@/components/InviteMe';
 import IntroParallax from '@/components/IntroParallax';
 import Reveal from '@/components/Reveal';
 import ThunderRings from '@/components/ThunderRings';
@@ -53,6 +54,9 @@ export default async function Home() {
       <div id="work" className="relative z-10 overflow-x-clip rounded-t-[28px] bg-paper shadow-[0_-24px_60px_-30px_rgba(0,0,0,0.55)] sm:rounded-t-[40px]">
         <main className="mx-auto max-w-4xl px-5 py-20 pb-[max(5rem,calc(env(safe-area-inset-bottom,0px)+3rem))] sm:px-8 sm:py-28 sm:pb-[max(7rem,calc(env(safe-area-inset-bottom,0px)+4rem))]">
           <Feed github={github} />
+
+          {/* three asks with proof from the timeline, quiet, just above the campfire */}
+          <InviteMe />
 
           {/* Trailhead: the fire sits right under the end of the rail, the heading in its light */}
           <footer className="relative isolate mt-3">
