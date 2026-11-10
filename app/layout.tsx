@@ -3,7 +3,7 @@ import { Anton, Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 import { themeBootScript } from "@/lib/theme-boot";
 import { scrollBootScript } from "@/lib/scroll-boot";
-import { SITE_URL } from "@/lib/site";
+import { OG_IMAGE, SITE_URL } from "@/lib/site";
 
 const display = Anton({
   subsets: ["latin"],
@@ -37,12 +37,14 @@ export const metadata: Metadata = {
     locale: "en_CA",
     firstName: "Seyon",
     lastName: "Sri",
+    images: [OG_IMAGE],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Seyon Sri",
     description: DESCRIPTION,
     creator: "@s3yon_",
+    images: [OG_IMAGE],
   },
   applicationName: "Seyon Sri",
   // iOS home-screen app: full screen, content runs under a translucent status bar
