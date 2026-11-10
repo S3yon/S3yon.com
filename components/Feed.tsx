@@ -188,7 +188,7 @@ function Entry({ entry }: { entry: FeedEntry }) {
                   href={entry.orgUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline decoration-2 decoration-rule underline-offset-[5px] transition-colors hover:decoration-accent"
+                  className="py-3 underline decoration-2 decoration-rule underline-offset-[5px] transition-colors hover:decoration-accent"
                 >
                   {entry.org}
                 </a>
@@ -216,7 +216,7 @@ function Entry({ entry }: { entry: FeedEntry }) {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group -my-2 inline-flex items-center gap-1.5 py-2 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-accent"
+                className="group -my-3 inline-flex items-center gap-1.5 py-3 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-accent"
               >
                 <span className="border-b border-rule pb-0.5 transition-colors group-hover:border-accent">
                   {link.label}
@@ -831,7 +831,7 @@ function GithubRow({ github }: { github: GithubStats }) {
       >
         <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] sm:text-[21px]">Still building</h3>
         <p className="mt-2 text-[15px] leading-relaxed text-muted">
-          <a href={github.profileUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline decoration-2 decoration-rule underline-offset-[4px] transition-colors hover:decoration-accent">
+          <a href={github.profileUrl} target="_blank" rel="noopener noreferrer" className="py-[13px] font-medium text-ink underline decoration-2 decoration-rule underline-offset-[4px] transition-colors hover:decoration-accent">
             <CountUp value={github.last30} state={state} /> GitHub contributions
           </a>{' '}
           in the last 30 days, <CountUp value={github.thisYear} state={state} delay={0.15} /> this year.

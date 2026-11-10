@@ -213,7 +213,7 @@ export default function NowPlayingIsland() {
                             href={track.songUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group -my-2 inline-flex items-center gap-1.5 py-2 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-chalk/70 transition-colors hover:text-chalk"
+                            className="group -my-3 inline-flex items-center gap-1.5 py-3 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-chalk/70 transition-colors hover:text-chalk"
                           >
                             <span className="border-b border-chalk/25 pb-0.5 transition-colors group-hover:border-chalk">Open in Spotify</span>
                             <span aria-hidden className="text-[13px] leading-none">↗</span>
