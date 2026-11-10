@@ -1154,6 +1154,8 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
   return (
     <FeedMode.Provider value={{ filtered }}>
       <div ref={topRef}>
+        {/* the lead rows' h3s need an h2 above them (heading order) */}
+        <h2 className="sr-only">Timeline</h2>
         <FilterBar active={filter} onChange={choose} feedEl={topRef} years={groups.map((g) => g.year)} />
         {/* Crossfade the whole list on a filter change instead of animating each entry. */}
         <AnimatePresence mode="wait" initial={false} onExitComplete={resetScroll}>
