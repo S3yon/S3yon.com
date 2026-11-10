@@ -6,11 +6,12 @@ import QuietRing from './social-fx/Quiet';
 import { socials } from '@/lib/socials';
 
 // Glanceable facts in place of a paragraph: a micro-label and a short value each.
+// NEXT replaced BASED (design lab pick A2a, 2026-11-10).
 const notes = [
   { label: 'NOW', value: 'SWE Intern', sub: 'Scotiabank' },
+  { label: 'NEXT', value: 'TPM Intern', sub: 'Scotiabank, Winter\u00a02027' },
   { label: 'STUDYING', value: 'Software Dev', sub: 'Sheridan College' },
   { label: 'HACKATHONS', value: '6 built', sub: '2 awards' },
-  { label: 'BASED', value: 'Oakville', sub: 'Ontario' },
 ];
 
 export default function Intro() {
@@ -45,8 +46,8 @@ export default function Intro() {
             style={{ animationDelay: '820ms' }}
           />
 
-          {/* at-a-glance notes */}
-          <dl className="mt-[clamp(14px,5svh,56px)] grid max-w-3xl grid-cols-2 gap-x-6 gap-y-[clamp(10px,3svh,24px)] sm:gap-x-10 lg:grid-cols-4 [@media(max-height:430px)]:hidden [@media(min-width:640px)_and_(max-height:640px)]:grid-cols-4">
+          {/* at-a-glance notes; NEXT's longer sub-line gets a wider row on desktop */}
+          <dl className="mt-[clamp(14px,5svh,56px)] grid max-w-3xl grid-cols-2 lg:max-w-[52rem] gap-x-6 gap-y-[clamp(10px,3svh,24px)] sm:gap-x-10 lg:grid-cols-4 [@media(max-height:430px)]:hidden [@media(min-width:640px)_and_(max-height:640px)]:grid-cols-4">
             {notes.map((note, i) => (
               <div
                 key={note.label}
