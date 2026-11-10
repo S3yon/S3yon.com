@@ -321,7 +321,7 @@ export const feed: FeedEntry[] = [
       'https://www.sheridancollege.ca/programs/computer-systems-technology-software-development-and-network-engineering',
     kind: 'education',
     current: true,
-    description: 'Advanced Diploma, 3.9 GPA. Graduating August 2027.',
+    description: 'Advanced Diploma, 3.75 GPA. Graduating August 2027.',
   },
   {
     year: 2022,
