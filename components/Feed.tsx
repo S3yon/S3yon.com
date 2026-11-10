@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   AnimatePresence,
   animate,
@@ -19,9 +19,12 @@ import { feedOn, torontoDay, upcoming, type FeedEntry, type EntryKind, type Upco
 import type { GithubStats } from '@/lib/github';
 import OnRotation from './OnRotation';
 import { useSpotify, type SpotifyState } from '@/lib/use-spotify';
+import { projectOf } from '@/lib/projects';
 import { ThemeBolt } from './ThunderSwitch';
 import KindIcon from './KindIcon';
 import FilterDock from './FilterDock';
+import ProjectPanel from './ProjectPanel';
+import { PreviewCard, ProjectShot, usePreview } from './ProjectPreview';
 
 type FilterKey = 'all' | 'award' | EntryKind;
 
@@ -74,8 +77,22 @@ function Entry({ entry }: { entry: FeedEntry }) {
   const tone = entry.current ? 'border-accent/60 text-accent' : 'border-rule text-muted';
   const award = isAward(entry);
 
+  // Projects with a screenshot preview it from the title (hover card on desktop, inline on touch);
+  // the three with a longer story open in place, and their links move into the More row. On touch
+  // those three show the screenshot inside the opened panel instead of under the description.
+  const project = projectOf(entry);
+  const shot = project?.shot;
+  const story = project?.story;
+  const colRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLAnchorElement>(null);
+  const preview = usePreview(colRef, titleRef);
+  const cardId = useId();
+
   return (
-    <article className="relative grid gap-2.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
+    <article
+      onPointerEnter={shot ? preview.warmUp : undefined}
+      className="relative grid gap-2.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16"
+    >
       <span ref={markerRef} aria-hidden className="absolute left-0 top-0 z-10 h-9 w-9">
         {state === 'shown' && (
           <motion.span
@@ -123,9 +140,24 @@ function Entry({ entry }: { entry: FeedEntry }) {
         {entry.month}
       </motion.p>
 
-      <motion.div {...text(0.05)} className="min-w-0">
+      <motion.div {...text(0.05)} ref={colRef} className="relative min-w-0">
         <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] text-balance sm:text-[21px]">
-          {entry.title}
+          {shot ? (
+            <a
+              href={shot.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-describedby={cardId}
+              data-preview-link
+              ref={titleRef}
+              {...preview.handlers}
+              className="underline decoration-rule decoration-2 underline-offset-[5px] transition-colors hover:decoration-accent focus-visible:decoration-accent"
+            >
+              {entry.title}
+            </a>
+          ) : (
+            entry.title
+          )}
           {entry.org && (
             <>
               <span className="font-normal text-faint"> @ </span>
@@ -154,7 +186,11 @@ function Entry({ entry }: { entry: FeedEntry }) {
           {entry.description}
         </p>
 
-        {entry.links && entry.links.length > 0 && (
+        {shot && !story && (
+          <ProjectShot shot={shot} crop className="mt-4 max-w-[480px] [@media(hover:hover)]:hidden" />
+        )}
+
+        {!story && entry.links && entry.links.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
             {entry.links.map((link) => (
               <a
@@ -182,6 +218,9 @@ function Entry({ entry }: { entry: FeedEntry }) {
             ))}
           </ul>
         )}
+
+        {story && <ProjectPanel story={story} links={entry.links} shot={shot} />}
+        {shot && <PreviewCard shot={shot} id={cardId} show={preview.show} warm={preview.warm} pos={preview.pos} />}
       </motion.div>
     </article>
   );
