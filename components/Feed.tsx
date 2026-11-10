@@ -21,6 +21,7 @@ import OnRotation from './OnRotation';
 import { useSpotify, type SpotifyState } from '@/lib/use-spotify';
 import { ThemeBolt } from './ThunderSwitch';
 import KindIcon from './KindIcon';
+import FilterDock from './FilterDock';
 
 type FilterKey = 'all' | 'award' | EntryKind;
 
@@ -831,13 +832,15 @@ type BarProps = { active: FilterKey; onChange: (key: FilterKey) => void; years: 
 
 // Editorial tab row in the same uppercase micro-label style as the links. Right of the tabs, the
 // year being read: one stacked label per year, faded in and out by useLargeTitles.
+// Phones (under 768px) get the filters in the bottom dock instead (FilterDock), so there the bar
+// keeps only the year, on the left, and the theme bolt.
 function Tabs({ active, onChange, years }: BarProps) {
   const feed = useFeed();
   return (
     <div className="flex items-end justify-between gap-6">
       <nav
         aria-label="Filter timeline"
-        className="flex min-w-0 gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
+        className="flex min-w-0 gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] max-md:hidden sm:gap-8 lg:pr-0 lg:[mask-image:none]"
       >
         {FILTERS.map((f) => {
           const on = f.key === active;
@@ -866,7 +869,7 @@ function Tabs({ active, onChange, years }: BarProps) {
           );
         })}
       </nav>
-      <div className="flex shrink-0 items-center gap-4">
+      <div className="flex shrink-0 items-center gap-4 max-md:h-[52px] max-md:flex-1 max-md:justify-between">
         <span aria-hidden className="grid">
           {years.map((y) => (
             <span
@@ -878,7 +881,7 @@ function Tabs({ active, onChange, years }: BarProps) {
             </span>
           ))}
         </span>
-        <ThemeBolt className="mb-2 ml-1" />
+        <ThemeBolt className="ml-1 md:mb-2" />
       </div>
     </div>
   );
@@ -1079,6 +1082,10 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
     const yrs = [...new Set(shown.map((e) => e.year))].sort((a, b) => b - a);
     return yrs.map((year) => ({ year, entries: shown.filter((e) => e.year === year) }));
   }, [filter, entries]);
+  const dockItems = useMemo(
+    () => FILTERS.map((f) => ({ key: f.key, label: f.label, count: entries.filter(f.match).length })),
+    [entries],
+  );
 
   const choose = (key: FilterKey) => {
     if (key === filter) return;
@@ -1102,6 +1109,7 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
         {/* the lead rows' h3s need an h2 above them (heading order) */}
         <h2 className="sr-only">Timeline</h2>
         <FilterBar active={filter} onChange={choose} feedEl={topRef} years={groups.map((g) => g.year)} />
+        <FilterDock items={dockItems} active={filter} onChange={(k) => choose(k as FilterKey)} feedEl={topRef} />
         {/* Crossfade the whole list on a filter change instead of animating each entry. */}
         <AnimatePresence mode="wait" initial={false} onExitComplete={resetScroll}>
           <motion.div
@@ -1111,7 +1119,9 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
             transition={{ duration: 0.45, ease: EASE }}
             onAnimationComplete={() => refreshTitles.current()}
-            className="relative"
+            // phones: a short filtered list still fills the screen, so the footer stays below
+            // and the filter dock (hidden once the footer reaches it) stays in reach
+            className={`relative ${filter === 'all' ? '' : 'max-md:min-h-[100svh]'}`}
           >
             <Rail
               startsAtRow={filter === 'all'}
