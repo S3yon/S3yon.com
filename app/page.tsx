@@ -29,7 +29,6 @@ const profile = {
     jobTitle: 'Software Engineer Intern',
     worksFor: { '@type': 'Organization', name: 'Scotiabank', url: 'https://www.scotiabank.com' },
     affiliation: { '@type': 'CollegeOrUniversity', name: 'Sheridan College', url: 'https://www.sheridancollege.ca' },
-    homeLocation: { '@type': 'Place', name: 'Oakville, Ontario' },
     sameAs: socials.filter((s) => s.url.startsWith('http')).map((s) => s.url),
   },
 };
