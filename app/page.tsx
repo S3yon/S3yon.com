@@ -7,6 +7,8 @@ import IntroParallax from '@/components/IntroParallax';
 import Reveal from '@/components/Reveal';
 import ThunderRings from '@/components/ThunderRings';
 import { getGithubStats } from '@/lib/github';
+import { SITE_URL } from '@/lib/site';
+import { socials } from '@/lib/socials';
 
 // Refresh the GitHub counts every hour.
 export const revalidate = 3600;
@@ -14,10 +16,29 @@ export const revalidate = 3600;
 // Each page names its own canonical address (layout-level would stamp "/" on every route).
 export const metadata: Metadata = { alternates: { canonical: '/' } };
 
+// Who the page is about, for search engines (schema.org ProfilePage + Person). Only facts the
+// page already shows.
+const profile = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  url: `${SITE_URL}/`,
+  mainEntity: {
+    '@type': 'Person',
+    name: 'Seyon Sri',
+    url: `${SITE_URL}/`,
+    jobTitle: 'Software Engineer Intern',
+    worksFor: { '@type': 'Organization', name: 'Scotiabank', url: 'https://www.scotiabank.com' },
+    affiliation: { '@type': 'CollegeOrUniversity', name: 'Sheridan College', url: 'https://www.sheridancollege.ca' },
+    homeLocation: { '@type': 'Place', name: 'Oakville, Ontario' },
+    sameAs: socials.filter((s) => s.url.startsWith('http')).map((s) => s.url),
+  },
+};
+
 export default async function Home() {
   const github = await getGithubStats();
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(profile) }} />
       <ThunderRings />
       <Intro />
       <IntroParallax />
