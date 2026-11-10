@@ -18,7 +18,7 @@ export default function CampLinks() {
         href={`mailto:${EMAIL}`}
         title={EMAIL}
         {...h}
-        className="inline-block bg-ink px-5 py-3 font-heading text-[12px] font-bold uppercase tracking-[0.16em] text-paper transition-colors hover:bg-accent"
+        className="inline-block bg-ink px-5 py-[13px] font-heading text-[12px] font-bold uppercase tracking-[0.16em] text-paper transition-colors hover:bg-accent"
       >
         Email me
       </a>
@@ -27,7 +27,7 @@ export default function CampLinks() {
         target="_blank"
         rel="noopener noreferrer"
         {...h}
-        className="group -my-2 inline-flex items-center gap-1.5 py-2 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-accent"
+        className="group -my-3 inline-flex items-center gap-1.5 py-3 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-accent"
       >
         <span className="border-b border-rule pb-0.5 transition-colors group-hover:border-accent">LinkedIn</span>
         <span aria-hidden className="text-[13px] leading-none">↗</span>
