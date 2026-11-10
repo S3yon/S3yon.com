@@ -39,6 +39,13 @@ export default async function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(profile) }} />
+      {/* keyboard users jump past the cover; hidden until focused */}
+      <a
+        href="#work"
+        className="sr-only z-[80] font-heading text-[12px] font-bold uppercase tracking-[0.16em] focus:not-sr-only focus:fixed focus:left-4 focus:top-[max(1rem,env(safe-area-inset-top))] focus:bg-paper focus:px-5 focus:py-3 focus:text-ink focus:outline-none focus:ring-2 focus:ring-accent"
+      >
+        Skip to the work
+      </a>
       <ThunderRings />
       <Intro />
       <IntroParallax />
