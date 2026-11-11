@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   AnimatePresence,
   animate,
@@ -19,7 +19,12 @@ import { feedOn, torontoDay, upcoming, type FeedEntry, type EntryKind, type Upco
 import type { GithubStats } from '@/lib/github';
 import OnRotation from './OnRotation';
 import { useSpotify, type SpotifyState } from '@/lib/use-spotify';
+import { projectOf } from '@/lib/projects';
 import { ThemeBolt } from './ThunderSwitch';
+import KindIcon from './KindIcon';
+import FilterDock from './FilterDock';
+import ProjectPanel from './ProjectPanel';
+import { PreviewCard, ProjectShot, usePreview } from './ProjectPreview';
 
 type FilterKey = 'all' | 'award' | EntryKind;
 
@@ -44,62 +49,6 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 // Entries already revealed once. A filter change re-mounts them; they must not animate again.
 const seen = new Set<string>();
 const FeedMode = createContext({ filtered: false });
-
-function KindIcon({ kind, award }: { kind: EntryKind; award: boolean }) {
-  const stroke = 'currentColor';
-  const common = {
-    width: 15,
-    height: 15,
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    stroke,
-    strokeWidth: 1.8,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    'aria-hidden': true,
-  };
-
-  if (award) {
-    return (
-      <svg {...common}>
-        <circle cx="12" cy="8" r="6" />
-        <path d="M8.2 13.5 7 22l5-3 5 3-1.2-8.5" />
-      </svg>
-    );
-  }
-
-  switch (kind) {
-    case 'role':
-      return (
-        <svg {...common}>
-          <rect x="2" y="7" width="20" height="14" rx="2" />
-          <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-        </svg>
-      );
-    case 'project':
-      return (
-        <svg {...common}>
-          <path d="m8 18-6-6 6-6" />
-          <path d="m16 6 6 6-6 6" />
-        </svg>
-      );
-    case 'community':
-      return (
-        <svg {...common}>
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-          <circle cx="9" cy="7" r="4" />
-          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-        </svg>
-      );
-    case 'education':
-      return (
-        <svg {...common}>
-          <path d="M22 10 12 5 2 10l10 5 10-5Z" />
-          <path d="M6 12.5V17c0 1.1 2.7 2.5 6 2.5s6-1.4 6-2.5v-4.5" />
-        </svg>
-      );
-  }
-}
 
 function Entry({ entry }: { entry: FeedEntry }) {
   const key = entryKey(entry);
@@ -128,8 +77,22 @@ function Entry({ entry }: { entry: FeedEntry }) {
   const tone = entry.current ? 'border-accent/60 text-accent' : 'border-rule text-muted';
   const award = isAward(entry);
 
+  // Projects with a screenshot preview it from the title (hover card on desktop, inline on touch);
+  // the three with a longer story open in place, and their links move into the More row. On touch
+  // those three show the screenshot inside the opened panel instead of under the description.
+  const project = projectOf(entry);
+  const shot = project?.shot;
+  const story = project?.story;
+  const colRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLAnchorElement>(null);
+  const preview = usePreview(colRef, titleRef);
+  const cardId = useId();
+
   return (
-    <article className="relative grid gap-2.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16">
+    <article
+      onPointerEnter={shot ? preview.warmUp : undefined}
+      className="relative grid gap-2.5 pb-10 pl-12 sm:grid-cols-[6rem_1fr] sm:gap-8 sm:pl-16"
+    >
       <span ref={markerRef} aria-hidden className="absolute left-0 top-0 z-10 h-9 w-9">
         {state === 'shown' && (
           <motion.span
@@ -177,9 +140,24 @@ function Entry({ entry }: { entry: FeedEntry }) {
         {entry.month}
       </motion.p>
 
-      <motion.div {...text(0.05)} className="min-w-0">
+      <motion.div {...text(0.05)} ref={colRef} className="relative min-w-0">
         <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] text-balance sm:text-[21px]">
-          {entry.title}
+          {shot ? (
+            <a
+              href={shot.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-describedby={cardId}
+              data-preview-link
+              ref={titleRef}
+              {...preview.handlers}
+              className="underline decoration-rule decoration-2 underline-offset-[5px] transition-colors hover:decoration-accent focus-visible:decoration-accent"
+            >
+              {entry.title}
+            </a>
+          ) : (
+            entry.title
+          )}
           {entry.org && (
             <>
               <span className="font-normal text-faint"> @ </span>
@@ -188,7 +166,7 @@ function Entry({ entry }: { entry: FeedEntry }) {
                   href={entry.orgUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline decoration-2 decoration-rule underline-offset-[5px] transition-colors hover:decoration-accent"
+                  className="py-3 underline decoration-2 decoration-rule underline-offset-[5px] transition-colors hover:decoration-accent"
                 >
                   {entry.org}
                 </a>
@@ -208,7 +186,11 @@ function Entry({ entry }: { entry: FeedEntry }) {
           {entry.description}
         </p>
 
-        {entry.links && entry.links.length > 0 && (
+        {shot && !story && (
+          <ProjectShot shot={shot} crop className="mt-4 max-w-[480px] [@media(hover:hover)]:hidden" />
+        )}
+
+        {!story && entry.links && entry.links.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
             {entry.links.map((link) => (
               <a
@@ -216,7 +198,7 @@ function Entry({ entry }: { entry: FeedEntry }) {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group -my-2 inline-flex items-center gap-1.5 py-2 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-accent"
+                className="group -my-3 inline-flex items-center gap-1.5 py-3 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] text-ink/70 transition-colors hover:text-accent"
               >
                 <span className="border-b border-rule pb-0.5 transition-colors group-hover:border-accent">
                   {link.label}
@@ -236,6 +218,9 @@ function Entry({ entry }: { entry: FeedEntry }) {
             ))}
           </ul>
         )}
+
+        {story && <ProjectPanel story={story} links={entry.links} shot={shot} />}
+        {shot && <PreviewCard shot={shot} id={cardId} show={preview.show} warm={preview.warm} pos={preview.pos} />}
       </motion.div>
     </article>
   );
@@ -831,7 +816,7 @@ function GithubRow({ github }: { github: GithubStats }) {
       >
         <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] sm:text-[21px]">Still building</h3>
         <p className="mt-2 text-[15px] leading-relaxed text-muted">
-          <a href={github.profileUrl} target="_blank" rel="noopener noreferrer" className="font-medium text-ink underline decoration-2 decoration-rule underline-offset-[4px] transition-colors hover:decoration-accent">
+          <a href={github.profileUrl} target="_blank" rel="noopener noreferrer" className="py-[13px] font-medium text-ink underline decoration-2 decoration-rule underline-offset-[4px] transition-colors hover:decoration-accent">
             <CountUp value={github.last30} state={state} /> GitHub contributions
           </a>{' '}
           in the last 30 days, <CountUp value={github.thisYear} state={state} delay={0.15} /> this year.
@@ -859,7 +844,7 @@ function LeadRows({ github, spotify }: { github: GithubStats | null; spotify: Sp
             </span>
             <p className="font-heading text-[11px] font-bold uppercase tracking-[0.16em] text-accent sm:pt-2">Next up</p>
             <div className="min-w-0">
-              <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] text-ink/60 sm:text-[21px]">
+              <h3 className="font-heading text-[19px] font-extrabold leading-snug tracking-[-0.01em] text-ink/65 sm:text-[21px]">
                 {next.event.url ? (
                   <a href={next.event.url} target="_blank" rel="noopener noreferrer" className="underline decoration-2 decoration-rule underline-offset-[5px] transition-colors hover:decoration-accent">
                     {next.event.title}
@@ -886,13 +871,15 @@ type BarProps = { active: FilterKey; onChange: (key: FilterKey) => void; years: 
 
 // Editorial tab row in the same uppercase micro-label style as the links. Right of the tabs, the
 // year being read: one stacked label per year, faded in and out by useLargeTitles.
+// Phones (under 768px) get the filters in the bottom dock instead (FilterDock), so there the bar
+// keeps only the year, on the left, and the theme bolt.
 function Tabs({ active, onChange, years }: BarProps) {
   const feed = useFeed();
   return (
     <div className="flex items-end justify-between gap-6">
       <nav
         aria-label="Filter timeline"
-        className="flex min-w-0 gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] sm:gap-8 lg:pr-0 lg:[mask-image:none]"
+        className="flex min-w-0 gap-6 overflow-x-auto pr-8 [mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)] [scrollbar-width:none] max-md:hidden sm:gap-8 lg:pr-0 lg:[mask-image:none]"
       >
         {FILTERS.map((f) => {
           const on = f.key === active;
@@ -903,11 +890,11 @@ function Tabs({ active, onChange, years }: BarProps) {
               aria-pressed={on}
               onClick={() => onChange(f.key)}
               className={`relative shrink-0 pb-3.5 pt-5 font-heading text-[11.5px] font-bold uppercase tracking-[0.16em] transition-colors duration-300 ${
-                on ? 'text-ink' : 'text-ink/55 hover:text-ink/80'
+                on ? 'text-ink' : 'text-ink/65 hover:text-ink/85'
               }`}
             >
               {f.label}
-              <span className="ml-1.5 font-sans text-[11px] font-medium tracking-normal tabular-nums text-ink/45">
+              <span className="ml-1.5 font-sans text-[11px] font-medium tracking-normal tabular-nums text-ink/[0.62]">
                 {feed.filter(f.match).length}
               </span>
               {on && (
@@ -921,7 +908,7 @@ function Tabs({ active, onChange, years }: BarProps) {
           );
         })}
       </nav>
-      <div className="flex shrink-0 items-center gap-4">
+      <div className="flex shrink-0 items-center gap-4 max-md:h-[52px] max-md:flex-1 max-md:justify-between">
         <span aria-hidden className="grid">
           {years.map((y) => (
             <span
@@ -933,7 +920,7 @@ function Tabs({ active, onChange, years }: BarProps) {
             </span>
           ))}
         </span>
-        <ThemeBolt className="mb-2 ml-1" />
+        <ThemeBolt className="ml-1 md:mb-2" />
       </div>
     </div>
   );
@@ -1134,6 +1121,10 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
     const yrs = [...new Set(shown.map((e) => e.year))].sort((a, b) => b - a);
     return yrs.map((year) => ({ year, entries: shown.filter((e) => e.year === year) }));
   }, [filter, entries]);
+  const dockItems = useMemo(
+    () => FILTERS.map((f) => ({ key: f.key, label: f.label, count: entries.filter(f.match).length })),
+    [entries],
+  );
 
   const choose = (key: FilterKey) => {
     if (key === filter) return;
@@ -1154,7 +1145,10 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
   return (
     <FeedMode.Provider value={{ filtered }}>
       <div ref={topRef}>
+        {/* the lead rows' h3s need an h2 above them (heading order) */}
+        <h2 className="sr-only">Timeline</h2>
         <FilterBar active={filter} onChange={choose} feedEl={topRef} years={groups.map((g) => g.year)} />
+        <FilterDock items={dockItems} active={filter} onChange={(k) => choose(k as FilterKey)} feedEl={topRef} />
         {/* Crossfade the whole list on a filter change instead of animating each entry. */}
         <AnimatePresence mode="wait" initial={false} onExitComplete={resetScroll}>
           <motion.div
@@ -1164,7 +1158,9 @@ export default function Feed({ github = null }: { github?: GithubStats | null })
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
             transition={{ duration: 0.45, ease: EASE }}
             onAnimationComplete={() => refreshTitles.current()}
-            className="relative"
+            // phones: a short filtered list still fills the screen, so the footer stays below
+            // and the filter dock (hidden once the footer reaches it) stays in reach
+            className={`relative ${filter === 'all' ? '' : 'max-md:min-h-[100svh]'}`}
           >
             <Rail
               startsAtRow={filter === 'all'}

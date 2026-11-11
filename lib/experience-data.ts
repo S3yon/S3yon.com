@@ -28,7 +28,7 @@ export const feed: FeedEntry[] = [
     orgUrl: 'https://www.linkedin.com/company/sheridan-cs-club/',
     kind: 'community',
     description:
-      "Helped organize the club's fall social night at Trafalgar, with game stations, club booths and a Gemini agents workshop. Designed the photobooth frames, ran the booth and shot the event.",
+      "Helped organize the club's fall social night at Trafalgar, with clubs from across Sheridan in one room for game stations, booths and a Gemini agents workshop. Designed the photobooth frames, ran the booth, games and AV, and had the GDG photo and video team cover the night.",
   },
   {
     year: 2026,
@@ -39,7 +39,19 @@ export const feed: FeedEntry[] = [
     orgUrl: 'https://www.gdgsheridan.com/',
     kind: 'community',
     description:
-      "Filmed Sheridan's one-day case competition, cut the start-of-day montage and the full event recap, and built the case-file photobooth frame.",
+      "Ran the media team at Sheridan's one-day case competition. Two of our photographers delivered 219 photos while I filmed. I cut the start-of-day montage and the full recap from the team's clips, and built the case-file photobooth frame.",
+  },
+  {
+    year: 2026,
+    month: 'October',
+    title: 'Marketing Lead',
+    org: 'BearHacks',
+    logo: '/logos/bearhacks.svg',
+    orgUrl: 'https://www.bearhacks.com/',
+    kind: 'community',
+    current: true,
+    description:
+      "Marketing lead again for BearHacks 2027, April 23 to 25. Running sponsor outreach and auditing last year's sponsorship package.",
   },
   {
     year: 2026,
@@ -50,7 +62,7 @@ export const feed: FeedEntry[] = [
     orgUrl: 'https://www.gdgsheridan.com/',
     kind: 'community',
     description:
-      'Shot headshots for everyone who came and filmed the event. Left with a lot of new connections and a better read on the industry.',
+      'Helped organize this industry panel with Hackville and Women in BizTech, with speakers from IBM, RBC, BMO and PointClickCare. My first event as GDG\'s photo lead: headshots for every attendee and video of the panel.',
   },
   {
     year: 2026,
@@ -66,13 +78,14 @@ export const feed: FeedEntry[] = [
   {
     year: 2026,
     month: 'August',
-    title: 'Lead Photographer',
+    title: 'Photo & Video Team Lead',
     org: 'GDG Sheridan',
     logo: '/logos/gdgsheridan.png',
     orgUrl: 'https://www.gdgsheridan.com/',
     kind: 'role',
     current: true,
-    description: 'Leading event photography for GDG Sheridan.',
+    description:
+      "Leading GDG Sheridan's photo and video team. I plan the shifts and coverage for each event, and edit the recaps and promo reels for the club's socials.",
   },
   {
     year: 2026,
@@ -161,12 +174,13 @@ export const feed: FeedEntry[] = [
   {
     year: 2025,
     month: 'December',
-    title: 'Organizer',
+    title: 'Marketing Lead',
     org: 'BearHacks',
     logo: '/logos/bearhacks.svg',
     orgUrl: 'https://www.bearhacks.com/',
     kind: 'community',
-    description: 'Second term organizing BearHacks, through May 2026.',
+    description:
+      "Marketing lead for BearHacks 2026: 248 registered on Devpost, 68 projects and 22 sponsors in April. Also shot the weekend's photos and video.",
   },
   {
     year: 2025,
@@ -261,7 +275,7 @@ export const feed: FeedEntry[] = [
     kind: 'community',
     current: true,
     description:
-      'Leading tech projects and programming competitions — 15+ events to grow student engagement.',
+      "Organized 15+ events with the exec team, from programming competitions and a startup founders' coffee chat to Social Battery, the club's cross-club social night.",
   },
   {
     year: 2025,
@@ -307,7 +321,7 @@ export const feed: FeedEntry[] = [
       'https://www.sheridancollege.ca/programs/computer-systems-technology-software-development-and-network-engineering',
     kind: 'education',
     current: true,
-    description: 'Advanced Diploma, 3.9 GPA. Graduating August 2027.',
+    description: 'Advanced Diploma, 3.75 GPA. Graduating August 2027.',
   },
   {
     year: 2022,
@@ -357,6 +371,12 @@ export const upcoming: UpcomingEvent[] = [
     title: 'Sheridan Datathon 2026 @ GDG Sheridan',
     detail: '24-hour data hackathon for 250+ students at Sheridan HMC, turning real industry datasets into insights.',
     url: 'https://gdg.community.dev/events/details/google-gdg-on-campus-sheridan-college-trafalgar-road-campus-oakville-canada-presents-get-into-gear-sheridan-datathon-2026/',
+    feedTitle: 'Sheridan Datathon 2026',
+    recap:
+      "Led the 8-person media team for Sheridan's 24-hour data hackathon, 5 photographers and 3 videographers. Built the shift plan so every block had a photographer and a videographer on it. Designed the photobooth frame and cut the closing video.",
+    org: 'GDG Sheridan',
+    logo: '/logos/gdgsheridan.png',
+    orgUrl: 'https://www.gdgsheridan.com/',
   },
   {
     date: '2026-11-14',

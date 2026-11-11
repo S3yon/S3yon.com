@@ -24,7 +24,7 @@ export function ThemeBolt({ className = '' }: { className?: string }) {
       type="button"
       onClick={flip}
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-      className={`group grid h-9 w-9 shrink-0 place-items-center rounded-full border border-rule text-ink/70 transition-colors hover:border-ink/30 hover:text-ink ${className}`}
+      className={`group relative grid h-9 w-9 shrink-0 after:absolute after:-inset-1 after:rounded-full after:content-[''] place-items-center rounded-full border border-rule text-ink/70 transition-colors hover:border-ink/30 hover:text-ink ${className}`}
     >
       <Bolt dark={theme === 'dark'} size={15} />
     </button>
